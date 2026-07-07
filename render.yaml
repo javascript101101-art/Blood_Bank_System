@@ -1,30 +1,31 @@
 # ============================================
-# Render Blueprint for Blood Bank System
+# Render Blueprint - Blood Bank System
 # ============================================
 
+# ============================================
+# 1. PostgreSQL Databases (top-level)
+# ============================================
 databases:
-  # ============================================
-  # 1. Global Database (PostgreSQL)
-  # ============================================
   - name: blood-global-db
     plan: free
     region: singapore
     databaseName: blood_global
     user: blood_user
 
-  # ============================================
-  # 2. Local Database (Hospital A - PostgreSQL)
-  # ============================================
   - name: blood-local-hospital-a-db
     plan: free
     region: singapore
     databaseName: blood_local_hospital_a
     user: blood_user
 
+# ============================================
+# 2. Services (Web, Static, etc.)
+# ============================================
 services:
-  # ============================================
-  # 3. Global Server (Backend)
-  # ============================================
+
+  # ==========================================
+  # 2A. Global Server (FastAPI Backend)
+  # ==========================================
   - type: web
     name: blood-global-server
     runtime: python
@@ -51,9 +52,9 @@ services:
         value: 30
     healthCheckPath: /health
 
-  # ============================================
-  # 4. Local Server (Hospital A)
-  # ============================================
+  # ==========================================
+  # 2B. Local Server (Hospital A - FastAPI Backend)
+  # ==========================================
   - type: web
     name: blood-local-hospital-a
     runtime: python
@@ -82,9 +83,9 @@ services:
         value: 30
     healthCheckPath: /health
 
-  # ============================================
-  # 5. Frontend - Hospital A (Static Site)
-  # ============================================
+  # ==========================================
+  # 2C. Frontend - Hospital A (Static Site)
+  # ==========================================
   - type: static
     name: blood-hospital-a-frontend
     publishDir: frontend/hospital_a
@@ -97,9 +98,9 @@ services:
         source: /*
         destination: /index.html
 
-  # ============================================
-  # 6. Frontend - Global Admin (Static Site)
-  # ============================================
+  # ==========================================
+  # 2D. Frontend - Global Admin (Static Site)
+  # ==========================================
   - type: static
     name: blood-global-admin-frontend
     publishDir: frontend/global_admin
