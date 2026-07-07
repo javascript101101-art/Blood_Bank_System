@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital A - Blood Request Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🩸 Hospital A</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html">📊 Dashboard</a>
+            <a href="donors.html">👤 Donors</a>
+            <a href="inventory.html">📦 Inventory</a>
+            <a href="requests.html" class="active">📋 Requests</a>
+            <a href="#" id="logoutBtn">🚪 Logout</a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>📋 Blood Request Management</h1>
+            <button class="btn btn-primary" id="addRequestBtn">+ New Request</button>
+        </div>
+
+        <!-- Request Table -->
+        <div class="card">
+            <div class="card-body">
+                <table id="requestsTable">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Blood Group</th>
+                            <th>Rh Factor</th>
+                            <th>Quantity (ml)</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                            <th>Requested At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsBody">
+                        <tr><td colspan="8">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Request Modal -->
+    <div id="requestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">New Blood Request</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="requestForm">
+                <input type="hidden" id="requestId">
+                <div class="form-group">
+                    <label for="reqPatientName">Patient Name *</label>
+                    <input type="text" id="reqPatientName" required placeholder="Enter patient name">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reqBloodGroup">Blood Group *</label>
+                        <select id="reqBloodGroup" required>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reqRhFactor">Rh Factor *</label>
+                        <select id="reqRhFactor" required>
+                            <option value="Positive">Positive</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reqQuantity">Quantity Required (ml) *</label>
+                    <input type="number" id="reqQuantity" min="1" required placeholder="Enter quantity in ml">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reqUrgency">Urgency</label>
+                        <select id="reqUrgency">
+                            <option value="Normal">Normal</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reqStatus">Status</label>
+                        <select id="reqStatus">
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Fulfilled">Fulfilled</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Save Request</button>
+                <div id="requestFormError" class="error-message" style="display:none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/requests.js"></script>
+</body>
+</html>

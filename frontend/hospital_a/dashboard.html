@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital A - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🩸 Hospital A</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="active">📊 Dashboard</a>
+            <a href="donors.html">👤 Donors</a>
+            <a href="inventory.html">📦 Inventory</a>
+            <a href="requests.html">📋 Requests</a>
+            <a href="#" id="logoutBtn">🚪 Logout</a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                <span id="userName">Admin</span>
+                <span class="badge" id="userRole">Hospital_Admin</span>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👤</div>
+                <div class="stat-info">
+                    <h3 id="totalDonors">0</h3>
+                    <p>Total Donors</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-info">
+                    <h3 id="totalInventory">0</h3>
+                    <p>Inventory Items</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-info">
+                    <h3 id="totalRequests">0</h3>
+                    <p>Total Requests</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-info">
+                    <h3 id="pendingSync">0</h3>
+                    <p>Pending Sync</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Section -->
+        <div class="sync-section" style="margin-bottom: 20px;">
+            <div class="card">
+                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <span id="syncStatusMsg" style="font-weight: 600;">⏳ Loading sync status...</span>
+                        <span id="lastSyncTime" style="color: #888; font-size: 14px; margin-left: 16px;"></span>
+                    </div>
+                    <button id="syncBtn" class="btn btn-primary">🔄 Sync Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Donors</h3>
+                    <a href="donors.html">View All →</a>
+                </div>
+                <div class="card-body">
+                    <table id="recentDonorsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Blood Group</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentDonorsBody">
+                            <tr><td colspan="3">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
