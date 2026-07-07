@@ -1,19 +1,29 @@
+# ============================================
+# Render Blueprint for Blood Bank System
+# ============================================
+
 services:
   # ============================================
   # 1. Global Database (PostgreSQL)
   # ============================================
-  - type: pservicedb
+  - type: postgres
     name: blood-global-db
     plan: free
     region: singapore
+    databaseName: blood_global
+    user: blood_user
+    ipAllowList: []  # Render internal access only
 
   # ============================================
   # 2. Local Database (Hospital A - PostgreSQL)
   # ============================================
-  - type: pservicedb
+  - type: postgres
     name: blood-local-hospital-a-db
     plan: free
     region: singapore
+    databaseName: blood_local_hospital_a
+    user: blood_user
+    ipAllowList: []  # Render internal access only
 
   # ============================================
   # 3. Global Server (Backend)
