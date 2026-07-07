@@ -1,5 +1,18 @@
-- type: static site
-    name: blood-hospital-a-frontend
+# Keep your databases and services here...
+databases:
+  ...
+
+services:
+  - type: web
+    name: blood-global-server
+    ...
+  - type: web
+    name: blood-local-hospital-a
+    ...
+
+# Move static sites to this top-level key
+staticSites:
+  - name: blood-hospital-a-frontend
     publishDir: frontend/hospital_a
     buildCommand: echo "No build needed"
     envVars:
@@ -10,8 +23,7 @@
         source: /*
         destination: /index.html
 
-  - type: static site
-    name: blood-global-admin-frontend
+  - name: blood-global-admin-frontend
     publishDir: frontend/global_admin
     buildCommand: echo "No build needed"
     envVars:
