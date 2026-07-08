@@ -14,8 +14,16 @@ class BloodRequestBase(BaseModel):
 class BloodRequestCreate(BloodRequestBase):
     pass
 
-class BloodRequestUpdate(BloodRequestBase):
-    pass
+# ============================================
+# 🆕 Update Schema - အကုန်လုံး Optional ဖြစ်ရမယ်
+# ============================================
+class BloodRequestUpdate(BaseModel):
+    patient_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    blood_group: Optional[str] = Field(None, pattern="^(A|B|AB|O)$")
+    rh_factor: Optional[str] = Field(None, pattern="^(Positive|Negative)$")
+    quantity_ml: Optional[int] = Field(None, gt=0)
+    urgency: Optional[str] = Field(None, pattern="^(Critical|Urgent|Normal)$")
+    status: Optional[str] = Field(None, pattern="^(Pending|Approved|Fulfilled|Rejected)$")
 
 class BloodRequestResponse(BloodRequestBase):
     id: UUID

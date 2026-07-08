@@ -9,10 +9,22 @@ from app.schemas.request_schema import BloodRequestCreate, BloodRequestUpdate
 from datetime import datetime
 
 class RequestService:
-    
+
+    # ============================================
+    # Status Transition Rules (Workflow)
+    # ============================================
+    ALLOWED_TRANSITIONS = {
+        "Pending": ["Approved", "Rejected"],
+        "Approved": ["Fulfilled", "Rejected"],
+    }
+
+    TERMINAL_STATUSES = ["Fulfilled", "Rejected"]
+
     @staticmethod
     def create_request(db: Session, req_data: BloodRequestCreate, hospital_id: UUID, user_id: UUID) -> BloodRequest:
         """သွေးလိုအပ်ချက်အသစ် ဖန်တီးရန်"""
+        # Staff က status ကို Pending ပဲ သတ်မှတ်ပါ
+        req_data.status = "Pending"
         request = BloodRequest(
             **req_data.model_dump(),
             hospital_id=hospital_id,
@@ -37,76 +49,114 @@ class RequestService:
 
     @staticmethod
     def update_request(db: Session, req_id: UUID, hospital_id: UUID, req_data: BloodRequestUpdate) -> Optional[BloodRequest]:
-        """သွေးလိုအပ်ချက်ကို ပြင်ဆင်ရန် (Fulfilled ဖြစ်ရင် Inventory ကိုလျှော့ပေးမယ်)"""
+        """
+        သွေးလိုအပ်ချက်ကို ပြင်ဆင်ရန်
+        - Status Transition Rules ကို လိုက်နာရမယ်
+        - Approved → Fulfilled ဖြစ်မှသာ Inventory ကို လျှော့ပေးမယ်
+        """
         request = RequestService.get_request(db, req_id, hospital_id)
         if not request:
             return None
 
-        # ★★★ PHASE 2.4: Auto-Decrement Logic ★★★
         old_status = request.status
-        new_status = req_data.status if hasattr(req_data, 'status') else request.status
 
-        # Status က Fulfilled ဖြစ်သွားရင် Inventory ကို လျှော့ပါ
-        if new_status == "Fulfilled" and old_status != "Fulfilled":
-            # ၁။ သက်ဆိုင်ရာ Inventory ကို ရှာပါ (Available ဖြစ်ပြီး လိုအပ်တဲ့ သွေးအုပ်စုနဲ့ ကိုက်ညီတဲ့ဟာ)
-            inventory_item = db.query(Inventory).filter(
-                Inventory.hospital_id == hospital_id,
-                Inventory.blood_group == request.blood_group,
-                Inventory.rh_factor == request.rh_factor,
-                Inventory.status == "Available"
-            ).order_by(Inventory.expiry_date).first()  # သက်တမ်းနီးလာတဲ့ဟာကို အရင်သုံးပါ
+        # ============================================
+        # req_data ထဲက status ကို ယူပါ
+        # ============================================
+        update_data = req_data.model_dump(exclude_unset=True)
+        new_status = update_data.get("status")
 
-            if not inventory_item:
+        # status ကို ပြောင်းချင်တယ်ဆိုရင်
+        if new_status and new_status != old_status:
+
+            # ၁။ Terminal Status (Fulfilled/Rejected) ကနေ ပြောင်းလို့မရဘူး
+            if old_status in RequestService.TERMINAL_STATUSES:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Insufficient stock for {request.blood_group} {request.rh_factor}"
+                    detail=f"Request with status '{old_status}' cannot be modified."
                 )
 
-            if inventory_item.quantity_ml < request.quantity_ml:
+            # ၂။ Allowed Transitions နဲ့ ကိုက်ညီမှု ရှိမရှိ စစ်ပါ
+            if old_status in RequestService.ALLOWED_TRANSITIONS:
+                if new_status not in RequestService.ALLOWED_TRANSITIONS[old_status]:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Cannot change status from '{old_status}' to '{new_status}'. "
+                               f"Allowed: {RequestService.ALLOWED_TRANSITIONS[old_status]}"
+                    )
+            else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Not enough quantity. Available: {inventory_item.quantity_ml}ml, Required: {request.quantity_ml}ml"
+                    detail=f"Invalid status '{old_status}' for transition."
                 )
 
-            # ၂။ Inventory ကို Update လုပ်ပါ (လျှော့ပါ)
-            inventory_item.quantity_ml -= request.quantity_ml
-            if inventory_item.quantity_ml == 0:
-                inventory_item.status = "Expired"
+            # ၃။ Approved → Fulfilled ဆိုရင် Inventory ကို လျှော့ပါ
+            if new_status == "Fulfilled" and old_status == "Approved":
+                RequestService._decrement_inventory(db, request)
 
-            db.add(inventory_item)
-            
-            # ၃။ Inventory Update အတွက် Sync Queue ထဲထည့်ပါ
-            inv_sync_data = {
-                "blood_group": inventory_item.blood_group,
-                "rh_factor": inventory_item.rh_factor,
-                "quantity_ml": inventory_item.quantity_ml,
-                "expiry_date": str(inventory_item.expiry_date),
-                "status": inventory_item.status
-            }
-            inv_sync_entry = SyncQueue(
-                hospital_id=hospital_id,
-                table_name="inventory",
-                record_id=inventory_item.id,
-                operation="UPDATE",
-                data=inv_sync_data,
-                status="PENDING"
-            )
-            db.add(inv_sync_entry)
-
-        # ၄။ Request ကို Update လုပ်ပါ
-        for key, value in req_data.model_dump(exclude_unset=True).items():
+        # ============================================
+        # Update Request (Status အပါအဝင် အကုန်ပြင်ပါ)
+        # ============================================
+        for key, value in update_data.items():
             setattr(request, key, value)
-            
+
+        # Fulfilled ဖြစ်ရင် fulfilled_at ကို ထည့်ပါ
         if request.status == "Fulfilled" and request.fulfilled_at is None:
             request.fulfilled_at = datetime.utcnow()
 
         db.commit()
         db.refresh(request)
 
-        # ၅။ Request အတွက် Sync Queue ထဲထည့်ပါ
+        # Sync Queue ထဲထည့်ပါ
         RequestService._add_to_sync_queue(db, request, "UPDATE")
-        
         return request
+
+    @staticmethod
+    def _decrement_inventory(db: Session, request: BloodRequest):
+        """
+        Request Fulfilled ဖြစ်ရင် Inventory ထဲက သွေးပမာဏကို လျှော့ပေးပါ
+        """
+        inventory_item = db.query(Inventory).filter(
+            Inventory.hospital_id == request.hospital_id,
+            Inventory.blood_group == request.blood_group,
+            Inventory.rh_factor == request.rh_factor,
+            Inventory.status == "Available"
+        ).order_by(Inventory.expiry_date).first()
+
+        if not inventory_item:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Insufficient stock for {request.blood_group} {request.rh_factor}"
+            )
+
+        if inventory_item.quantity_ml < request.quantity_ml:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Not enough quantity. Available: {inventory_item.quantity_ml}ml, Required: {request.quantity_ml}ml"
+            )
+
+        inventory_item.quantity_ml -= request.quantity_ml
+        if inventory_item.quantity_ml == 0:
+            inventory_item.status = "Expired"
+
+        db.add(inventory_item)
+
+        inv_sync_data = {
+            "blood_group": inventory_item.blood_group,
+            "rh_factor": inventory_item.rh_factor,
+            "quantity_ml": inventory_item.quantity_ml,
+            "expiry_date": str(inventory_item.expiry_date),
+            "status": inventory_item.status
+        }
+        inv_sync_entry = SyncQueue(
+            hospital_id=request.hospital_id,
+            table_name="inventory",
+            record_id=inventory_item.id,
+            operation="UPDATE",
+            data=inv_sync_data,
+            status="PENDING"
+        )
+        db.add(inv_sync_entry)
 
     @staticmethod
     def delete_request(db: Session, req_id: UUID, hospital_id: UUID) -> bool:
@@ -114,6 +164,13 @@ class RequestService:
         request = RequestService.get_request(db, req_id, hospital_id)
         if not request:
             return False
+
+        if request.status in RequestService.TERMINAL_STATUSES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot delete request with status '{request.status}'."
+            )
+
         RequestService._add_to_sync_queue(db, request, "DELETE", delete=True)
         db.delete(request)
         db.commit()
@@ -133,7 +190,7 @@ class RequestService:
         }
         if request.fulfilled_at:
             data["fulfilled_at"] = request.fulfilled_at.isoformat()
-        
+
         sync_entry = SyncQueue(
             hospital_id=request.hospital_id,
             table_name="blood_requests",

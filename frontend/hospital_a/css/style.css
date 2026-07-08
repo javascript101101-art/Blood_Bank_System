@@ -497,3 +497,47 @@ table tr:hover {
     50% { opacity: 0.6; }
     100% { opacity: 1; }
 }
+/* ===== Action Buttons ===== */
+.btn-success {
+    background: #27ae60;
+    color: white;
+}
+.btn-success:hover {
+    background: #219a52;
+}
+
+/* ===== Status Badges for Requests ===== */
+.status-pending {
+    background: #cce5ff;
+    color: #004085;
+}
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+.status-fulfilled {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+/* ===== User Management Table ===== */
+.user-management-section .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-management-section .badge {
+    font-size: 14px;
+}
+
+#pendingUsersTable td {
+    vertical-align: middle;
+}
+
+#pendingUsersTable .btn-sm {
+    margin: 0 2px;
+}
