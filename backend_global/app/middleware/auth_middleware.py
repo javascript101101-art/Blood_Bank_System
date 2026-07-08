@@ -45,3 +45,61 @@ def role_required(required_role: str):
             )
         return current_user
     return role_checker
+
+# ============================================
+# 🆕 Granular Permission Checker (FIXED)
+# ============================================
+def permission_required(resource: str, action: str):
+    """
+    Permission Matrix:
+    - Global_Admin: Can manage hospitals, cannot modify local data
+    - Hospital_Admin: Can manage all local data (create, read, update, delete, approve)
+    - Lab_Staff / Receptionist: Can create requests only (read-only for others)
+    """
+    def permission_checker(current_user: User = Depends(get_current_active_user)):
+        
+        # ============================================
+        # 1. Global Admin
+        # ============================================
+        if current_user.role == "Global_Admin":
+            if resource in ["donors", "inventory", "blood_requests"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Global Admin cannot modify {resource}."
+                )
+            return current_user
+
+        # ============================================
+        # 2. Hospital Admin - ★★★ အကုန်လုံးလုပ်ခွင့်ရှိတယ် ★★★
+        # ============================================
+        if current_user.role == "Hospital_Admin":
+            # ★ Admin က ဘာ resource ကိုမဆို လုပ်ခွင့်ရှိတယ်
+            return current_user
+
+        # ============================================
+        # 3. Staff / Receptionist - Request Create ပဲလုပ်ခွင့်ရှိတယ်
+        # ============================================
+        if current_user.role in ["Lab_Staff", "Receptionist"]:
+            # Request Create လုပ်ခွင့်ရှိတယ်
+            if resource == "blood_requests" and action == "create":
+                return current_user
+            
+            # Approve/Reject/Fulfill/Delete/Update လုပ်ခွင့်မရှိဘူး
+            if resource == "blood_requests" and action in ["approve", "update", "delete"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"{current_user.role} does not have permission to {action} {resource}."
+                )
+            
+            # တစ်ခြား Resources (donors, inventory) ကို မပြင်ရဘူး
+            if resource in ["donors", "inventory"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"{current_user.role} does not have permission to {action} {resource}."
+                )
+            
+            return current_user
+
+        # Fallback
+        return current_user
+    return permission_checker

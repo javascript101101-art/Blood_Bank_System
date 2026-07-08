@@ -1,7 +1,9 @@
 // ============================================
 // API Configuration
 // ============================================
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000/api/v1'
+    : 'https://blood-local-hospital-a.onrender.com/api/v1';
 
 // ============================================
 // Fetch Wrapper with JWT Token (FIXED)

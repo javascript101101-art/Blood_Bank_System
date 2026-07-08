@@ -155,3 +155,118 @@ function formatDateTime(dateString) {
         minute: '2-digit'
     });
 }
+// ============================================
+// 🆕 User Management - Pending Staff Approvals
+// ============================================
+
+// Load pending users when dashboard loads
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    
+    // Load pending users
+    loadPendingUsers();
+});
+
+// ============================================
+// Load Pending Users
+// ============================================
+async function loadPendingUsers() {
+    const tbody = document.getElementById('pendingUsersBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="5">Loading pending users...</td></tr>';
+
+    try {
+        const result = await apiRequest('/auth/pending-users', { method: 'GET' });
+        
+        if (result && result.status === 200 && result.data) {
+            const pendingCount = document.getElementById('pendingCount');
+            if (pendingCount) {
+                pendingCount.textContent = result.data.length;
+            }
+
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">✅ No pending staff registrations.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = result.data.map(user => `
+                <tr>
+                    <td><strong>${user.username}</strong></td>
+                    <td>${user.full_name || '-'}</td>
+                    <td><span class="badge">${user.role}</span></td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="approveUser('${user.id}')">✅ Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectUser('${user.id}')">❌ Reject</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="5">Error loading pending users.</td></tr>';
+        console.error('Error loading pending users:', error);
+    }
+}
+
+// ============================================
+// Approve User (Admin Only)
+// ============================================
+async function approveUser(userId) {
+    if (!confirm('Are you sure you want to APPROVE this staff registration?')) return;
+
+    try {
+        const result = await apiRequest(`/auth/approve-user/${userId}`, { 
+            method: 'PUT',
+            body: JSON.stringify({ is_active: true })
+        });
+
+        if (result && result.status === 200) {
+            alert('✅ Staff account approved successfully!');
+            loadPendingUsers(); // Refresh the list
+            loadDashboardStats(); // Refresh stats
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not approve user.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+// ============================================
+// Reject User (Admin Only)
+// ============================================
+async function rejectUser(userId) {
+    if (!confirm('Are you sure you want to REJECT this staff registration?')) return;
+
+    try {
+        const result = await apiRequest(`/auth/approve-user/${userId}`, { 
+            method: 'PUT',
+            body: JSON.stringify({ is_active: false })
+        });
+
+        if (result && result.status === 200) {
+            alert('❌ Staff registration rejected.');
+            loadPendingUsers(); // Refresh the list
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not reject user.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+// ============================================
+// Utility: Format Date
+// ============================================
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
