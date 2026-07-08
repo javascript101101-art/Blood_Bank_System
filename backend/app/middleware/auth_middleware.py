@@ -45,3 +45,49 @@ def role_required(required_role: str):
             )
         return current_user
     return role_checker
+
+# ============================================
+# 🆕 Granular Permission Checker
+# ============================================
+def permission_required(resource: str, action: str):
+    """
+    Example usage:
+        @permission_required("donors", "delete")
+        def delete_donor(...):
+            ...
+    
+    Permission Matrix:
+        - Global_Admin: Can manage hospitals, but cannot modify local data (donors, inventory, requests)
+        - Hospital_Admin: Can manage all local data for their own hospital only
+        - Lab_Staff / Receptionist: Read-only (view only)
+    """
+    def permission_checker(current_user: User = Depends(get_current_active_user)):
+        # Global Admin က ဆေးရုံ Data ကို မပြင်ရဘူး
+        if current_user.role == "Global_Admin":
+            # Global Admin က ဆေးရုံတွေကို စီမံခွင့်ရှိမယ် (ဒါပေမယ့် Local Data ကို မပြင်ရဘူး)
+            if resource in ["donors", "inventory", "blood_requests"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Global Admin cannot modify {resource}. This is for local hospital admins only."
+                )
+            # Global Admin က ဒီ resource ကို လုပ်ခွင့်ရှိရင် return ပြန်ပါ
+            return current_user
+        
+        # Hospital Admin က သူ့ဆေးရုံ Data ကိုပဲ ပြင်ရမယ်
+        if current_user.role == "Hospital_Admin":
+            # Hospital Admin က သူ့ဆေးရုံ ID ကို စစ်ဆေးပါ (ဒါက နောက်ထပ် လုံခြုံရေးအတွက်)
+            # ဒါပေမယ့် ဒီအဆင့်မှာ hospital_id ကို စစ်ဆေးဖို့ လိုပါတယ် (ဒါက Services ထဲမှာ ထပ်စစ်နိုင်တယ်)
+            return current_user
+        
+        # Lab_Staff နဲ့ Receptionist က Read-Only ဖြစ်ပါတယ်
+        if current_user.role in ["Lab_Staff", "Receptionist"]:
+            if action in ["create", "update", "delete"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"{current_user.role} does not have permission to {action} {resource}."
+                )
+            return current_user
+        
+        # ကျန်တဲ့ Roles တွေအတွက် (အပိုထပ်ထည့်ထားတဲ့ Roles)
+        return current_user
+    return permission_checker

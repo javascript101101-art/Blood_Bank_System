@@ -45,3 +45,30 @@ def role_required(required_role: str):
             )
         return current_user
     return role_checker
+
+# ============================================
+# 🆕 Granular Permission Checker (Global)
+# ============================================
+def permission_required(resource: str, action: str):
+    """
+    Global Server အတွက် Permission Checker
+    - Global_Admin: ဆေးရုံတွေကို Register/Update/Delete လုပ်နိုင်တယ်။
+    - အခြား Roles တွေက Global Server ကို မဝင်ရဘူး (ဒါမှမဟုတ် Read-Only)
+    """
+    def permission_checker(current_user: User = Depends(get_current_active_user)):
+        # Global Admin က ဆေးရုံတွေကိုပဲ စီမံခွင့်ရှိမယ်
+        if current_user.role == "Global_Admin":
+            if resource == "hospitals":
+                return current_user
+            # Global Admin က တစ်ခြား Resource တွေကို မပြင်ရဘူး
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Global Admin cannot access {resource}."
+            )
+        
+        # တစ်ခြား Roles တွေက Global Server ကို မဝင်ရဘူး
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Only Global Admin can access this server."
+        )
+    return permission_checker

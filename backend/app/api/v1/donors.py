@@ -7,6 +7,7 @@ from app.middleware.auth_middleware import get_current_active_user, role_require
 from app.models.user import User
 from app.services.donor_service import DonorService
 from app.schemas.donor_schema import DonorCreate, DonorUpdate, DonorResponse
+from app.middleware.auth_middleware import permission_required
 
 router = APIRouter(prefix="/donors", tags=["Donors"])
 
@@ -56,10 +57,10 @@ def update_donor(
 def delete_donor(
     donor_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(role_required("Hospital_Admin"))
+    current_user: User = Depends(permission_required("donors", "delete"))
 ):
-    """သွေးလှူရှင်ကို ဖျက်ရန်"""
-    deleted = DonorService.delete_donor(db, donor_id, current_user.hospital_id)
-    if not deleted:
+    donor = DonorService.get_donor(db, donor_id, current_user.hospital_id)
+    if not donor:
         raise HTTPException(status_code=404, detail="Donor not found")
+    DonorService.delete_donor(db, donor_id, current_user.hospital_id)
     return None
