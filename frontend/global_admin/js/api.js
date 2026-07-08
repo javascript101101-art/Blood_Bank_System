@@ -1,8 +1,9 @@
 // ============================================
 // API Configuration (Global Server)
 // ============================================
+// API Base URL - Production အတွက် Render URL ကို သုံးပါ
+// Make sure this points to Global Server
 const API_BASE = 'http://localhost:8001/api/v1';
-
 // ============================================
 // Fetch Wrapper with JWT Token
 // ============================================
