@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
             <h2>🩸 Hospital A</h2>
@@ -21,14 +20,12 @@
         </nav>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
             <h1>Donor Management</h1>
             <button class="btn btn-primary" id="addDonorBtn">+ Add Donor</button>
         </div>
 
-        <!-- Donor Table -->
         <div class="card">
             <div class="card-body">
                 <table id="donorsTable">
@@ -96,6 +93,12 @@
                 <div class="form-group">
                     <label for="donorLastDonation">Last Donation Date</label>
                     <input type="date" id="donorLastDonation">
+                </div>
+                <!-- 🆕 Donation Quantity Field - REQUIRED -->
+                <div class="form-group">
+                    <label for="donorQuantity">Donation Quantity (ml) *</label>
+                    <input type="number" id="donorQuantity" min="100" max="600" required placeholder="Enter quantity (100-600ml)">
+                    <small style="color: #888;">Min: 100ml, Max: 600ml</small>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Save Donor</button>
                 <div id="donorFormError" class="error-message" style="display:none;"></div>

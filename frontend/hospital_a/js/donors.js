@@ -1,10 +1,9 @@
 // ============================================
-// Donor Management
+// Donor Management (UPDATED with Quantity)
 // ============================================
 let editingDonorId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check authentication
     if (!isAuthenticated()) {
         window.location.href = 'index.html';
         return;
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadDonors();
 
-    // Modal events
     const modal = document.getElementById('donorModal');
     const addBtn = document.getElementById('addDonorBtn');
     const closeBtn = document.querySelector('.close');
@@ -29,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === modal) closeDonorModal();
     });
 
-    // Form submit
     const form = document.getElementById('donorForm');
     if (form) {
         form.addEventListener('submit', handleDonorSubmit);
@@ -97,9 +94,11 @@ function openDonorModal(donorData = null) {
         document.getElementById('donorPhone').value = donorData.contact_phone || '';
         document.getElementById('donorEmail').value = donorData.email || '';
         document.getElementById('donorLastDonation').value = donorData.last_donation_date || '';
+        document.getElementById('donorQuantity').value = donorData.donation_quantity || '';
         editingDonorId = donorData.id;
     } else {
         title.textContent = 'Add New Donor';
+        document.getElementById('donorQuantity').value = '';
     }
 
     modal.classList.add('show');
@@ -113,7 +112,7 @@ function closeDonorModal() {
 }
 
 // ============================================
-// Edit Donor (called from table)
+// Edit Donor
 // ============================================
 async function editDonor(id) {
     try {
@@ -129,28 +128,17 @@ async function editDonor(id) {
 // ============================================
 // Delete Donor
 // ============================================
-// ============================================
-// Delete Donor (FIXED)
-// ============================================
 async function deleteDonor(id) {
     if (!confirm('Are you sure you want to delete this donor?')) return;
 
     try {
         const result = await apiRequest(`/donors/${id}`, { method: 'DELETE' });
-        
-        // 204 No Content နဲ့ 200 OK ကို အောင်မြင်တယ်လို့ သတ်မှတ်ပါ
         if (result && (result.status === 204 || result.status === 200)) {
-            // အောင်မြင်ပါက Table ကို Refresh လုပ်ပါ
             loadDonors();
-            // Optional: Success message ပြရန်
-            // alert('Donor deleted successfully!');
         } else {
-            // အခြား Status တွေအတွက် Error ပြပါ
-            const errorMsg = result?.data?.detail || 'Error deleting donor. Please try again.';
-            alert(errorMsg);
+            alert('Error deleting donor.');
         }
     } catch (error) {
-        console.error('Delete error:', error);
         alert('Network error. Please check your connection.');
     }
 }
@@ -164,6 +152,13 @@ async function handleDonorSubmit(e) {
     const errorEl = document.getElementById('donorFormError');
     errorEl.style.display = 'none';
 
+    const quantity = parseInt(document.getElementById('donorQuantity').value);
+    if (isNaN(quantity) || quantity < 100 || quantity > 600) {
+        errorEl.textContent = 'Donation quantity must be between 100ml and 600ml.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
     const donorData = {
         name: document.getElementById('donorName').value,
         dob: document.getElementById('donorDob').value || null,
@@ -171,19 +166,18 @@ async function handleDonorSubmit(e) {
         rh_factor: document.getElementById('donorRhFactor').value,
         contact_phone: document.getElementById('donorPhone').value || null,
         email: document.getElementById('donorEmail').value || null,
-        last_donation_date: document.getElementById('donorLastDonation').value || null
+        last_donation_date: document.getElementById('donorLastDonation').value || null,
+        donation_quantity: quantity
     };
 
     try {
         let result;
         if (editingDonorId) {
-            // Update
             result = await apiRequest(`/donors/${editingDonorId}`, {
                 method: 'PUT',
                 body: JSON.stringify(donorData)
             });
         } else {
-            // Create
             result = await apiRequest('/donors/', {
                 method: 'POST',
                 body: JSON.stringify(donorData)
