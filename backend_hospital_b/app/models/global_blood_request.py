@@ -1,0 +1,21 @@
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from app.models.base import BaseModel
+from sqlalchemy.sql import func
+
+class GlobalBloodRequest(BaseModel):
+    __tablename__ = "global_blood_requests"
+
+    requesting_hospital_id = Column(UUID(as_uuid=True), ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False)
+    blood_group = Column(String(3), nullable=False)
+    rh_factor = Column(String(10), nullable=False)
+    quantity_ml = Column(Integer, nullable=False)
+    urgency = Column(String(20), default="Normal")
+    status = Column(String(20), default="Pending")
+    assigned_hospital_id = Column(UUID(as_uuid=True), ForeignKey("hospitals.id", ondelete="SET NULL"), nullable=True)
+    request_note = Column(Text)
+    
+    # Relationships
+    requesting_hospital = relationship("Hospital", foreign_keys=[requesting_hospital_id])
+    assigned_hospital = relationship("Hospital", foreign_keys=[assigned_hospital_id])

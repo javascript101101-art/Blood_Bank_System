@@ -338,3 +338,93 @@ table tr:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== Filters Section ===== */
+.filters-section .card-body {
+    padding: 16px 20px;
+}
+
+.filters-section .form-group label {
+    font-size: 13px;
+    color: #555;
+}
+
+.filters-section select {
+    min-width: 150px;
+}
+
+/* ===== Status Badges ===== */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-fulfilled {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-quarantined {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* ===== Urgency Badges ===== */
+.urgency-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.urgency-normal {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.urgency-urgent {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.urgency-critical {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ===== Secondary Button ===== */
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}

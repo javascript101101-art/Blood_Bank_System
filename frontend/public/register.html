@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hospital Registration - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-box">
+            <!-- Header -->
+            <div class="register-header">
+                <h1>🏥 Hospital Registration</h1>
+                <p>Register your hospital to join the Blood Bank Network</p>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="success-message" style="display:none;">
+                ✅ Your registration request has been submitted successfully!<br />
+                <small>You will receive an email with API key once approved by Global Admin.</small>
+            </div>
+
+            <!-- Registration Form -->
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="hospitalName">Hospital Name *</label>
+                    <input
+                        type="text"
+                        id="hospitalName"
+                        placeholder="e.g. Yangon General Hospital"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input
+                        type="text"
+                        id="address"
+                        placeholder="e.g. No. 123, Bogyoke Road, Yangon"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="contactEmail">Contact Email *</label>
+                    <input
+                        type="email"
+                        id="contactEmail"
+                        placeholder="e.g. admin@yangonhospital.com"
+                        required
+                    />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    📨 Submit Registration Request
+                </button>
+
+                <div id="errorMessage" class="error-message" style="display:none;"></div>
+            </form>
+
+            <!-- Footer -->
+            <div class="register-footer">
+                <p>Already have an account? <a href="../global_admin/index.html">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/register.js"></script>
+</body>
+</html>
