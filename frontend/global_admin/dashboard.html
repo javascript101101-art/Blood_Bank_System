@@ -14,6 +14,10 @@
         </div>
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="active">📊 Dashboard</a>
+            <a href="donors.html">👤 All Donors</a>
+            <a href="inventory.html">📦 All Inventory</a>
+            <a href="requests.html">📋 All Requests</a>
+            <a href="global_requests.html" class="active">🌐 Global Requests</a>  <!-- 🆕 -->
             <a href="sync_logs.html">📋 Sync Logs</a>
             <a href="#" id="logoutBtn">🚪 Logout</a>
         </nav>
@@ -29,23 +33,23 @@
             </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Cards (Clickable) -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="window.location.href='donors.html'">
                 <div class="stat-icon">👤</div>
                 <div class="stat-info">
                     <h3 id="totalDonors">0</h3>
                     <p>Total Donors (All Hospitals)</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="window.location.href='inventory.html'">
                 <div class="stat-icon">📦</div>
                 <div class="stat-info">
                     <h3 id="totalInventory">0</h3>
                     <p>Total Inventory (All Hospitals)</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="window.location.href='requests.html'">
                 <div class="stat-icon">📋</div>
                 <div class="stat-info">
                     <h3 id="totalRequests">0</h3>

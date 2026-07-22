@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Admin - All Requests</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🌐 Global Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html">📊 Dashboard</a>
+            <a href="donors.html">👤 All Donors</a>
+            <a href="inventory.html">📦 All Inventory</a>
+            <a href="requests.html" class="active">📋 All Requests</a>
+            <a href="global_requests.html" class="active">🌐 Global Requests</a>  <!-- 🆕 -->
+            <a href="sync_logs.html">📋 Sync Logs</a>
+            <a href="#" id="logoutBtn">🚪 Logout</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>📋 All Blood Requests (All Hospitals)</h1>
+            <div class="user-info">
+                <span id="userName">Global Admin</span>
+                <span class="badge" id="userRole">Global_Admin</span>
+            </div>
+        </div>
+
+        <div class="filters-section" style="margin-bottom: 20px;">
+            <div class="card">
+                <div class="card-body" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="filterHospital" style="font-weight: 600; font-size: 14px;">Hospital</label>
+                        <select id="filterHospital" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                            <option value="all">All Hospitals</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="filterStatus" style="font-weight: 600; font-size: 14px;">Status</label>
+                        <select id="filterStatus" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                            <option value="all">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Fulfilled">Fulfilled</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
+                        <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                        <button id="resetFiltersBtn" class="btn btn-secondary" style="margin-left: 8px; background: #6c757d; color: white;">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <table id="requestsTable">
+                    <thead>
+                        <tr>
+                            <th>Hospital</th>
+                            <th>Patient Name</th>
+                            <th>Blood Group</th>
+                            <th>Quantity (ml)</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                            <th>Requested At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsBody">
+                        <tr><td colspan="7">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/requests.js"></script>
+</body>
+</html>

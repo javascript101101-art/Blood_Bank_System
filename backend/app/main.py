@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import auth, donors, inventory, requests, sync
 from app.config import settings
+from app.api.v1 import auth, donors, inventory, requests, sync, global_requests 
 
 app = FastAPI(
     title=f"Blood Bank Management System - {settings.SERVER_MODE.upper()} Mode",
@@ -29,6 +29,7 @@ app.include_router(donors.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(requests.router, prefix="/api/v1")
 app.include_router(sync.router, prefix="/api/v1")
+app.include_router(global_requests.router, prefix="/api/v1")  # 🆕 ဒီ line ကို ထည့်ပါ
 
 @app.get("/")
 def root():

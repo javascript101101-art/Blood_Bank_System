@@ -1,0 +1,319 @@
+// ============================================
+// Blood Request Management (FIXED)
+// ============================================
+let editingRequestId = null;
+let currentUserRole = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (!isAuthenticated()) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    const user = getUser();
+    currentUserRole = user?.role || 'Hospital_Admin';
+
+    // ★★★ Staff အတွက် Status Dropdown ကို ဖျောက်ပါ ★★★
+    const isStaff = currentUserRole === 'Lab_Staff' || currentUserRole === 'Receptionist';
+    const statusGroup = document.getElementById('statusGroup');
+    if (statusGroup && isStaff) {
+        statusGroup.style.display = 'none';
+    }
+
+    loadRequests();
+
+    const modal = document.getElementById('requestModal');
+    const addBtn = document.getElementById('addRequestBtn');
+    const closeBtn = document.querySelector('.close');
+
+    if (addBtn) {
+        addBtn.addEventListener('click', () => openRequestModal());
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeRequestModal);
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeRequestModal();
+    });
+
+    const form = document.getElementById('requestForm');
+    if (form) form.addEventListener('submit', handleRequestSubmit);
+});
+
+// ============================================
+// Load Requests (Role-based Actions)
+// ============================================
+async function loadRequests() {
+    const tbody = document.getElementById('requestsBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+
+    try {
+        const result = await apiRequest('/requests/', { method: 'GET' });
+        
+        if (result && result.status === 200 && result.data) {
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8">No blood requests found.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = result.data.map(req => {
+                let actionButtons = '';
+                let editDeleteButtons = '';
+
+                const isAdmin = currentUserRole === 'Hospital_Admin';
+                const isStaff = currentUserRole === 'Lab_Staff' || currentUserRole === 'Receptionist';
+
+                if (isAdmin) {
+                    if (req.status === 'Pending') {
+                        actionButtons = `
+                            <button class="btn btn-success btn-sm" onclick="approveRequest('${req.id}')">✅ Approve</button>
+                            <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">❌ Reject</button>
+                        `;
+                    } else if (req.status === 'Approved') {
+                        actionButtons = `
+                            <button class="btn btn-primary btn-sm" onclick="fulfillRequest('${req.id}')">📦 Fulfill</button>
+                            <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">❌ Reject</button>
+                        `;
+                    } else if (req.status === 'Fulfilled') {
+                        actionButtons = `<span class="status-badge status-fulfilled">✅ Done</span>`;
+                    } else if (req.status === 'Rejected') {
+                        actionButtons = `<span class="status-badge status-rejected">❌ Rejected</span>`;
+                    }
+
+                    if (req.status !== 'Fulfilled' && req.status !== 'Rejected') {
+                        editDeleteButtons = `
+                            <button class="btn btn-warning btn-sm" onclick="editRequest('${req.id}')">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteRequest('${req.id}')">🗑️</button>
+                        `;
+                    }
+                }
+
+                if (isStaff) {
+                    actionButtons = `<span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span>`;
+                    editDeleteButtons = '';
+                }
+
+                return `
+                    <tr>
+                        <td><strong>${req.patient_name}</strong></td>
+                        <td><span class="badge">${req.blood_group}</span></td>
+                        <td>${req.rh_factor}</td>
+                        <td>${req.quantity_ml}</td>
+                        <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
+                        <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
+                        <td>${formatDateTime(req.requested_at)}</td>
+                        <td>
+                            ${actionButtons}
+                            ${editDeleteButtons}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="8">Error loading requests.</td></tr>';
+        console.error('Error loading requests:', error);
+    }
+}
+
+// ============================================
+// Approve / Reject / Fulfill Functions
+// ============================================
+async function approveRequest(id) {
+    if (!confirm('Are you sure you want to APPROVE this request?')) return;
+
+    try {
+        const result = await apiRequest(`/requests/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'Approved' })
+        });
+
+        if (result && (result.status === 200)) {
+            alert('✅ Request approved successfully!');
+            loadRequests();
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not approve request.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+async function rejectRequest(id) {
+    if (!confirm('Are you sure you want to REJECT this request?')) return;
+
+    try {
+        const result = await apiRequest(`/requests/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'Rejected' })
+        });
+
+        if (result && (result.status === 200)) {
+            alert('❌ Request rejected.');
+            loadRequests();
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not reject request.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+async function fulfillRequest(id) {
+    if (!confirm('Are you sure you want to FULFILL this request? This will decrease inventory.')) return;
+
+    try {
+        const result = await apiRequest(`/requests/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'Fulfilled' })
+        });
+
+        if (result && (result.status === 200)) {
+            alert('✅ Request fulfilled! Inventory has been updated.');
+            loadRequests();
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not fulfill request.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+// ============================================
+// Open/Close Modal
+// ============================================
+function openRequestModal(requestData = null) {
+    const modal = document.getElementById('requestModal');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('requestForm');
+    const errorEl = document.getElementById('requestFormError');
+    
+    errorEl.style.display = 'none';
+    form.reset();
+    editingRequestId = null;
+
+    if (requestData) {
+        title.textContent = 'Edit Blood Request';
+        document.getElementById('requestId').value = requestData.id;
+        document.getElementById('reqPatientName').value = requestData.patient_name;
+        document.getElementById('reqBloodGroup').value = requestData.blood_group;
+        document.getElementById('reqRhFactor').value = requestData.rh_factor;
+        document.getElementById('reqQuantity').value = requestData.quantity_ml;
+        document.getElementById('reqUrgency').value = requestData.urgency;
+        document.getElementById('reqStatus').value = requestData.status;
+        editingRequestId = requestData.id;
+    } else {
+        title.textContent = 'New Blood Request';
+        document.getElementById('reqStatus').value = 'Pending';
+        document.getElementById('reqUrgency').value = 'Normal';
+    }
+
+    modal.classList.add('show');
+}
+
+function closeRequestModal() {
+    document.getElementById('requestModal').classList.remove('show');
+    document.getElementById('requestForm').reset();
+    document.getElementById('requestFormError').style.display = 'none';
+    editingRequestId = null;
+}
+
+// ============================================
+// Edit Request (Admin Only)
+// ============================================
+async function editRequest(id) {
+    try {
+        const result = await apiRequest(`/requests/${id}`, { method: 'GET' });
+        if (result && result.status === 200 && result.data) {
+            openRequestModal(result.data);
+        }
+    } catch (error) {
+        alert('Error loading request data.');
+    }
+}
+
+// ============================================
+// Delete Request (Admin Only)
+// ============================================
+async function deleteRequest(id) {
+    if (!confirm('Are you sure you want to delete this request?')) return;
+
+    try {
+        const result = await apiRequest(`/requests/${id}`, { method: 'DELETE' });
+        if (result && (result.status === 204 || result.status === 200)) {
+            loadRequests();
+        } else {
+            alert('Error deleting request.');
+        }
+    } catch (error) {
+        alert('Network error. Please check your connection.');
+    }
+}
+
+// ============================================
+// Handle Form Submit
+// ============================================
+async function handleRequestSubmit(e) {
+    e.preventDefault();
+    
+    const errorEl = document.getElementById('requestFormError');
+    errorEl.style.display = 'none';
+
+    const requestData = {
+        patient_name: document.getElementById('reqPatientName').value,
+        blood_group: document.getElementById('reqBloodGroup').value,
+        rh_factor: document.getElementById('reqRhFactor').value,
+        quantity_ml: parseInt(document.getElementById('reqQuantity').value),
+        urgency: document.getElementById('reqUrgency').value,
+        status: document.getElementById('reqStatus').value
+    };
+
+    if (!requestData.patient_name || !requestData.blood_group || !requestData.rh_factor) {
+        errorEl.textContent = 'Patient name, blood group, and Rh factor are required.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        let result;
+        if (editingRequestId) {
+            result = await apiRequest(`/requests/${editingRequestId}`, {
+                method: 'PUT',
+                body: JSON.stringify(requestData)
+            });
+        } else {
+            result = await apiRequest('/requests/', {
+                method: 'POST',
+                body: JSON.stringify(requestData)
+            });
+        }
+
+        if (result && (result.status === 201 || result.status === 200)) {
+            closeRequestModal();
+            loadRequests();
+        } else {
+            errorEl.textContent = result?.data?.detail || 'Error saving request.';
+            errorEl.style.display = 'block';
+        }
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        errorEl.style.display = 'block';
+    }
+}
+
+// ============================================
+// Utility Functions
+// ============================================
+function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
