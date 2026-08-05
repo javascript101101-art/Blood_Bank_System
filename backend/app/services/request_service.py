@@ -23,7 +23,6 @@ class RequestService:
     @staticmethod
     def create_request(db: Session, req_data: BloodRequestCreate, hospital_id: UUID, user_id: UUID) -> BloodRequest:
         """သွေးလိုအပ်ချက်အသစ် ဖန်တီးရန်"""
-        # Staff က status ကို Pending ပဲ သတ်မှတ်ပါ
         req_data.status = "Pending"
         request = BloodRequest(
             **req_data.model_dump(),
@@ -49,40 +48,28 @@ class RequestService:
 
     @staticmethod
     def update_request(db: Session, req_id: UUID, hospital_id: UUID, req_data: BloodRequestUpdate) -> Optional[BloodRequest]:
-        """
-        သွေးလိုအပ်ချက်ကို ပြင်ဆင်ရန်
-        - Status Transition Rules ကို လိုက်နာရမယ်
-        - Approved → Fulfilled ဖြစ်မှသာ Inventory ကို လျှော့ပေးမယ်
-        """
+        """သွေးလိုအပ်ချက်ကို ပြင်ဆင်ရန်"""
         request = RequestService.get_request(db, req_id, hospital_id)
         if not request:
             return None
 
         old_status = request.status
-
-        # ============================================
-        # req_data ထဲက status ကို ယူပါ
-        # ============================================
         update_data = req_data.model_dump(exclude_unset=True)
         new_status = update_data.get("status")
 
-        # status ကို ပြောင်းချင်တယ်ဆိုရင်
         if new_status and new_status != old_status:
 
-            # ၁။ Terminal Status (Fulfilled/Rejected) ကနေ ပြောင်းလို့မရဘူး
             if old_status in RequestService.TERMINAL_STATUSES:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Request with status '{old_status}' cannot be modified."
                 )
 
-            # ၂။ Allowed Transitions နဲ့ ကိုက်ညီမှု ရှိမရှိ စစ်ပါ
             if old_status in RequestService.ALLOWED_TRANSITIONS:
                 if new_status not in RequestService.ALLOWED_TRANSITIONS[old_status]:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Cannot change status from '{old_status}' to '{new_status}'. "
-                               f"Allowed: {RequestService.ALLOWED_TRANSITIONS[old_status]}"
+                        detail=f"Cannot change status from '{old_status}' to '{new_status}'. Allowed: {RequestService.ALLOWED_TRANSITIONS[old_status]}"
                     )
             else:
                 raise HTTPException(
@@ -90,52 +77,52 @@ class RequestService:
                     detail=f"Invalid status '{old_status}' for transition."
                 )
 
-            # ၃။ Approved → Fulfilled ဆိုရင် Inventory ကို လျှော့ပါ
+            # Approved → Fulfilled ဆိုရင် Inventory ကို လျှော့ပါ
             if new_status == "Fulfilled" and old_status == "Approved":
                 RequestService._decrement_inventory(db, request)
 
-        # ============================================
-        # Update Request (Status အပါအဝင် အကုန်ပြင်ပါ)
-        # ============================================
         for key, value in update_data.items():
             setattr(request, key, value)
 
-        # Fulfilled ဖြစ်ရင် fulfilled_at ကို ထည့်ပါ
         if request.status == "Fulfilled" and request.fulfilled_at is None:
             request.fulfilled_at = datetime.utcnow()
 
         db.commit()
         db.refresh(request)
 
-        # Sync Queue ထဲထည့်ပါ
         RequestService._add_to_sync_queue(db, request, "UPDATE")
         return request
 
     @staticmethod
     def _decrement_inventory(db: Session, request: BloodRequest):
-        """
-        Request Fulfilled ဖြစ်ရင် Inventory ထဲက သွေးပမာဏကို လျှော့ပေးပါ
-        """
+        """Request Fulfilled ဖြစ်ရင် Inventory ထဲက သွေးပမာဏကို လျှော့ပေးပါ"""
+        
+        # 🟢 Request က "A Positive" ဟု လာသဖြင့် Inventory နှင့် တိုက်စစ်ရန် ၂ ပိုင်း ပြန်ခွဲထုတ်ခြင်း
+        bg_parts = request.blood_group.split(" ")
+        req_bg = bg_parts[0] if len(bg_parts) > 0 else request.blood_group
+        req_rh = bg_parts[1] if len(bg_parts) > 1 else "Positive"
+
         inventory_item = db.query(Inventory).filter(
             Inventory.hospital_id == request.hospital_id,
-            Inventory.blood_group == request.blood_group,
-            Inventory.rh_factor == request.rh_factor,
+            Inventory.blood_group == req_bg,
+            Inventory.rh_factor == req_rh,
             Inventory.status == "Available"
         ).order_by(Inventory.expiry_date).first()
 
         if not inventory_item:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient stock for {request.blood_group} {request.rh_factor}"
+                detail=f"Insufficient stock for {request.blood_group}"
             )
 
-        if inventory_item.quantity_ml < request.quantity_ml:
+        # 🟢 quantity_ml အစား quantity_units ကို ပြောင်းလဲအသုံးပြုထားပါသည်
+        if inventory_item.quantity_ml < request.quantity_units:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Not enough quantity. Available: {inventory_item.quantity_ml}ml, Required: {request.quantity_ml}ml"
+                detail=f"Not enough quantity. Available: {inventory_item.quantity_ml} units, Required: {request.quantity_units} units"
             )
 
-        inventory_item.quantity_ml -= request.quantity_ml
+        inventory_item.quantity_ml -= request.quantity_units
         if inventory_item.quantity_ml == 0:
             inventory_item.status = "Expired"
 
@@ -179,12 +166,19 @@ class RequestService:
     @staticmethod
     def _add_to_sync_queue(db: Session, request: BloodRequest, operation: str, delete: bool = False):
         """Sync Queue ထဲထည့်ရန်"""
+        
+        # 🟢 External Clinic Form နှင့် ကိုက်ညီအောင် Data Dictionary ကို အသစ် ပြင်ဆင်ထားပါသည်
         data = {
-            "patient_name": request.patient_name,
+            "clinic_name": request.clinic_name,
+            "license": request.license,
+            "contact_phone": request.contact_phone,
+            "contact_email": request.contact_email,
+            "clinic_address": request.clinic_address,
             "blood_group": request.blood_group,
-            "rh_factor": request.rh_factor,
-            "quantity_ml": request.quantity_ml,
+            "quantity_units": request.quantity_units,
             "urgency": request.urgency,
+            "required_date": str(request.required_date) if request.required_date else None,
+            "patient_condition": request.patient_condition,
             "status": request.status,
             "requested_by_user_id": str(request.requested_by_user_id)
         }

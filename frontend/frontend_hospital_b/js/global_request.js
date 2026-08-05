@@ -1,5 +1,5 @@
 // ============================================
-// Global Blood Request (Hospital A)
+// Global Blood Request (Local Hospital)
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     if (!isAuthenticated()) {
@@ -48,7 +48,7 @@ async function handleSubmit(e) {
 
 async function loadMyRequests() {
     const tbody = document.getElementById('requestsBody');
-    tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     try {
         console.log('Fetching global requests...');
@@ -57,29 +57,115 @@ async function loadMyRequests() {
 
         if (result && result.status === 200 && result.data) {
             if (result.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">No global requests found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8">No global requests found.</td></tr>';
                 return;
             }
             
-            // ✅ Rh Factor ထည့်ပြီးသား
-            tbody.innerHTML = result.data.map(req => `
+            tbody.innerHTML = result.data.map(req => {
+                // 🟢 Action Button ကို Status ပေါ်မူတည်ပြီး ရွေးချယ်မည်
+                let actionBtn = '-';
+                const statusUpper = req.status.toUpperCase();
+                
+                // ၁။ ကိုယ်က သွေးတောင်းထားပြီး ရောက်လာတဲ့အခါ (Receive လုပ်ရန်)
+                if (statusUpper === 'SUPPLIER_FULFILLED' || statusUpper === 'IN-TRANSIT') {
+                    actionBtn = `<button onclick="receiveBlood('${req.id}')" class="btn btn-sm btn-success" style="background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Receive Blood</button>`;
+                } 
+                // ၂။ ကိုယ့်ဆီကို သွေးလှမ်းတောင်း (Assign ချ) ခံရတဲ့အခါ (Fulfill လုပ်ရန်)
+                else if (statusUpper === 'ASSIGNED') {
+                    actionBtn = `<button onclick="fulfillBlood('${req.id}')" class="btn btn-sm btn-primary" style="background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📦 Send Blood</button>`;
+                }
+
+                return `
                 <tr>
                     <td><span class="badge">${req.blood_group}</span></td>
-                    <td>${req.rh_factor}</td>   <!-- 🆕 Rh Factor -->
+                    <td>${req.rh_factor}</td>
                     <td>${req.quantity_ml} ml</td>
                     <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
                     <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
                     <td>${req.assigned_hospital_id ? 'Assigned' : 'Not assigned'}</td>
                     <td>${formatDateTime(req.created_at)}</td>
+                    <td>${actionBtn}</td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         } else {
             console.error('Failed to load requests:', result);
-            tbody.innerHTML = '<tr><td colspan="7">Error loading requests. Please check console.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">Error loading requests. Please check console.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading requests:', error);
-        tbody.innerHTML = '<tr><td colspan="7">Error loading requests.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">Error loading requests.</td></tr>';
+    }
+}
+
+// ==========================================
+// 🆕 Global သို့ သွေးပေးပို့ရန် (Fulfill)
+// ==========================================
+async function fulfillBlood(reqId) {
+    if (!confirm('Are you sure you want to send this blood? \n(It will be deducted from your Local Inventory)')) {
+        return;
+    }
+
+    try {
+        const result = await apiRequest(`/global-requests/${reqId}/fulfill`, {
+            method: 'POST'
+        });
+
+        if (result && result.status === 200) {
+            alert('🎉 Blood fulfilled successfully! Deducted from local inventory.');
+            loadMyRequests(); // Auto Refresh
+        } else {
+            alert(result?.data?.detail || 'Error fulfilling blood. Do you have enough inventory?');
+        }
+    } catch (error) {
+        console.error('Error fulfilling blood:', error);
+        alert('Network error while fulfilling blood.');
+    }
+}
+
+// ==========================================
+// Global မှ ပို့လိုက်သော သွေးကို လက်ခံရန် (Receive)
+// ==========================================
+async function receiveBlood(reqId) {
+    if (!confirm('Are you sure you have received the blood delivery? Local inventory will be updated.')) {
+        return;
+    }
+
+    try {
+        const result = await apiRequest(`/global-requests/${reqId}/receive`, {
+            method: 'POST'
+        });
+
+        if (result && result.status === 200) {
+            alert('🎉 Blood received successfully! Local inventory has been updated.');
+            loadMyRequests(); 
+        } else {
+            alert(result?.data?.detail || 'Error receiving blood.');
+        }
+    } catch (error) {
+        console.error('Error receiving blood:', error);
+        alert('Network error while receiving blood.');
+    }
+}
+
+// ==========================================
+// Global ဆီမှ Data များကို လှမ်းဆွဲယူရန် (Pull Sync)
+// ==========================================
+async function syncFromGlobal() {
+    try {
+        const response = await apiRequest('/sync/pull', {
+            method: 'POST'
+        });
+
+        if (response) {
+            alert('🔄 Successfully synced/pulled updates from Global Server!');
+            loadMyRequests(); 
+        } else {
+            alert('Failed to sync from global.');
+        }
+    } catch (error) {
+        console.error('Sync error:', error);
+        alert('Network error while syncing from global server.');
     }
 }
 

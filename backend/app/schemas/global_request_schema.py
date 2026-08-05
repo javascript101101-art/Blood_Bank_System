@@ -18,7 +18,8 @@ class GlobalBloodRequestUpdate(BaseModel):
     rh_factor: Optional[str] = Field(None, pattern="^(Positive|Negative)$")
     quantity_ml: Optional[int] = Field(None, gt=0)
     urgency: Optional[str] = Field(None, pattern="^(Critical|Urgent|Normal)$")
-    status: Optional[str] = Field(None, pattern="^(Pending|Assigned|Approved|Fulfilled|Rejected)$")
+    # 🔴 အောက်ပါ status pattern တွင် In-Transit နှင့် Delivered ကို ထပ်ဖြည့်ထားပါသည်
+    status: Optional[str] = Field(None, pattern="^(Pending|Assigned|Approved|Fulfilled|Rejected|In-Transit|Delivered)$")
     assigned_hospital_id: Optional[UUID] = None
     request_note: Optional[str] = None
 

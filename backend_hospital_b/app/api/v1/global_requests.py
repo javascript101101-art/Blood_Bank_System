@@ -44,3 +44,27 @@ def update_global_request(
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
     return request
+
+# ==========================================
+# 🆕 အသစ်ထပ်ထည့်ထားသော Receive Delivery API
+# ==========================================
+@router.post("/{req_id}/receive")
+def receive_blood_delivery(
+    req_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Hospital_Admin")) # Local ဆေးရုံက လက်ခံမည်
+):
+    """
+    Global က ပို့လိုက်တဲ့ သွေးကို Local က လက်ခံရရှိကြောင်း Confirm လုပ်ရန် (Receive Blood)
+    """
+    try:
+        result = GlobalRequestService.receive_delivery(
+            db=db, 
+            req_id=req_id, 
+            hospital_id=current_user.hospital_id
+        )
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

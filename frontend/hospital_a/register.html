@@ -1,52 +1,134 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Register</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinic Blood Request Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="register-container">
-        <div class="register-box">
-            <div class="register-header">
-                <h1>🩸 Hospital A</h1>
-                <p>Create Staff Account</p>
-            </div>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="username">Username *</label>
-                    <input type="text" id="username" placeholder="Choose a username" required>
-                </div>
-                <div class="form-group">
-                    <label for="full_name">Full Name *</label>
-                    <input type="text" id="full_name" placeholder="Enter your full name" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password *</label>
-                    <input type="password" id="password" placeholder="Enter password (min 6 chars)" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirm_password">Confirm Password *</label>
-                    <input type="password" id="confirm_password" placeholder="Confirm password" required>
-                </div>
-                <div class="form-group">
-                    <label for="role">Role *</label>
-                    <select id="role" required>
-                        <option value="Lab_Staff">Lab Staff</option>
-                        <option value="Receptionist">Receptionist</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Register</button>
-                <div id="registerError" class="error-message" style="display:none;"></div>
-                <div id="registerSuccess" class="success-message" style="display:none;"></div>
-            </form>
-            <p style="text-align:center; margin-top:16px;">
-                Already have an account? <a href="index.html">Login</a>
-            </p>
-        </div>
+<body class="bg-cover bg-center min-h-screen flex items-center justify-center relative p-4" 
+      style="background-image: url('https://plus.unsplash.com/premium_photo-1764691482392-92b36f7d597c?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8aG9zcGl0YWwlMjBsYWJvcmF0b3J5fGVufDB8fDB8fHww');">
+
+  <div class="absolute inset-0 bg-slate-900/60"></div>
+
+  <!-- Form Main Card Box (Compact Size: max-w-md) -->
+  <div class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden my-auto border border-slate-100">
+    
+    <!-- 1. Header Section -->
+    <div class="bg-slate-800 text-white p-5 text-center">
+      <div class="flex justify-center items-center gap-2 text-xl font-bold mb-1">
+        <span>🩺</span>
+        <span>Hospital Blood Bank Request Portal</span>
+      </div>
+      <p class="text-slate-300 text-xs">External Clinic & Hospital Blood Request Form</p>
     </div>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
+
+    <!-- 2. Form Inputs Section -->
+    <form class="p-5 space-y-4 text-xs">
+
+      <!-- Section 1: Clinic Information -->
+      <div class="space-y-2.5">
+        <h3 class="font-bold text-slate-700 uppercase tracking-wider border-b pb-1 flex items-center gap-1">
+          <span>🏥</span> Clinic / Hospital Information
+        </h3>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">CLINIC NAME *</label>
+            <input type="text" required placeholder="e.g. City Health Clinic" 
+                   class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">LICENSE *</label>
+            <input type="text" required placeholder="e.g. REG-102938" 
+                   class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">CONTACT PHONE *</label>
+            <input type="tel" required placeholder="09xxxxxxxxx" 
+                   class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">CONTACT EMAIL *</label>
+            <input type="email" required placeholder="clinic@example.com" 
+                   class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">CLINIC ADDRESS *</label>
+          <input type="text" required placeholder="Street, Township, City" 
+                 class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+        </div>
+      </div>
+
+      <!-- Section 2: Blood Request Details -->
+      <div class="space-y-2.5 pt-1">
+        <h3 class="font-bold text-slate-700 uppercase tracking-wider border-b pb-1 flex items-center gap-1">
+          <span>🩸</span> Blood Request Details
+        </h3>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">BLOOD GROUP *</label>
+            <select required class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50 font-bold">
+              <option value="">Select Blood Group</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">QUANTITY (UNITS) *</label>
+            <input type="number" min="1" required placeholder="e.g. 2" 
+                   class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">URGENCY LEVEL *</label>
+            <select required class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+              <option value="Normal Request">Normal Request</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Emergency">🚨 Emergency</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">REQUIRED DATE *</label>
+            <input type="date" required 
+                   class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">PATIENT CONDITION / REASON</label>
+          <textarea rows="2" placeholder="Brief explanation of patient condition or requirement..." 
+                    class="w-full px-2.5 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50"></textarea>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="pt-2">
+        <button type="submit" 
+                class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-lg">
+          Submit Blood Request
+        </button>
+      </div>
+
+    </form>
+  </div>
+
 </body>
-</html>

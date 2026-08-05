@@ -6,8 +6,8 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database URLs
-    GLOBAL_DATABASE_URL: str = os.getenv("GLOBAL_DATABASE_URL", "postgresql://postgres:123456@localhost/blood_global")
-    LOCAL_DATABASE_URL: str = os.getenv("LOCAL_DATABASE_URL", "postgresql://postgres:123456@localhost/blood_local_hospital_a")
+    GLOBAL_DATABASE_URL: str = os.getenv("GLOBAL_DATABASE_URL", "postgresql://postgres:thae123456@localhost/blood_global")
+    LOCAL_DATABASE_URL: str = os.getenv("LOCAL_DATABASE_URL", "postgresql://postgres:thae123456@localhost/blood_local_hospital_a")
     
     # Server Mode
     SERVER_MODE: str = os.getenv("SERVER_MODE", "local")

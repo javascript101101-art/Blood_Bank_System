@@ -44,3 +44,53 @@ def update_global_request(
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
     return request
+
+# ==========================================
+# 🆕 Assign ချခံရသော ဆေးရုံ (Hospital A) မှ သွေးပို့ပေးရန် (Fulfill)
+# ==========================================
+@router.post("/{req_id}/fulfill")
+def fulfill_global_request_local(
+    req_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Hospital_Admin"))
+):
+    """
+    Global က Assign ချလိုက်တဲ့ Request ကို Local ဆေးရုံက သွေးပို့ပေးလိုက်ကြောင်း Confirm လုပ်ရန် 
+    (Local Inventory မှ သွေးနှုတ်မည်)
+    """
+    try:
+        result = GlobalRequestService.fulfill_request_to_global(
+            db=db, 
+            req_id=req_id, 
+            hospital_id=current_user.hospital_id
+        )
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# 🆕 အသစ်ထပ်ထည့်ထားသော Receive Delivery API
+# ==========================================
+@router.post("/{req_id}/receive")
+def receive_blood_delivery(
+    req_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Hospital_Admin")) # Local ဆေးရုံက လက်ခံမည်
+):
+    """
+    Global က ပို့လိုက်တဲ့ သွေးကို Local က လက်ခံရရှိကြောင်း Confirm လုပ်ရန် (Receive Blood)
+    (Local Inventory သို့ သွေးပေါင်းထည့်မည်)
+    """
+    try:
+        result = GlobalRequestService.receive_delivery(
+            db=db, 
+            req_id=req_id, 
+            hospital_id=current_user.hospital_id
+        )
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,5 +1,5 @@
 // ============================================
-// Blood Request Management (FIXED)
+// Blood Request Management (FIXED FOR EXTERNAL CLINIC)
 // ============================================
 let editingRequestId = null;
 let currentUserRole = null;
@@ -95,15 +95,16 @@ async function loadRequests() {
                     editDeleteButtons = '';
                 }
 
+                // 🟢 HTML အသစ်နှင့် ကိုက်ညီအောင် Data Mapping ပြင်ဆင်ထားသည်
                 return `
                     <tr>
-                        <td><strong>${req.patient_name}</strong></td>
+                        <td><strong>${req.clinic_name}</strong><br><small>${req.contact_phone}</small></td>
                         <td><span class="badge">${req.blood_group}</span></td>
-                        <td>${req.rh_factor}</td>
-                        <td>${req.quantity_ml}</td>
-                        <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
+                        <td>${req.required_date || '-'}</td>
+                        <td>${req.quantity_units}</td>
+                        <td><span class="urgency-badge urgency-${req.urgency ? req.urgency.split(' ')[0].toLowerCase() : 'normal'}">${req.urgency}</span></td>
                         <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
-                        <td>${formatDateTime(req.requested_at)}</td>
+                        <td>${formatDateTime(req.requested_at || req.created_at)}</td>
                         <td>
                             ${actionButtons}
                             ${editDeleteButtons}
@@ -123,58 +124,30 @@ async function loadRequests() {
 // ============================================
 async function approveRequest(id) {
     if (!confirm('Are you sure you want to APPROVE this request?')) return;
-
-    try {
-        const result = await apiRequest(`/requests/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify({ status: 'Approved' })
-        });
-
-        if (result && (result.status === 200)) {
-            alert('✅ Request approved successfully!');
-            loadRequests();
-        } else {
-            alert('❌ Error: ' + (result?.data?.detail || 'Could not approve request.'));
-        }
-    } catch (error) {
-        alert('❌ Network error. Please try again.');
-    }
+    updateRequestStatus(id, 'Approved', '✅ Request approved successfully!');
 }
 
 async function rejectRequest(id) {
     if (!confirm('Are you sure you want to REJECT this request?')) return;
-
-    try {
-        const result = await apiRequest(`/requests/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify({ status: 'Rejected' })
-        });
-
-        if (result && (result.status === 200)) {
-            alert('❌ Request rejected.');
-            loadRequests();
-        } else {
-            alert('❌ Error: ' + (result?.data?.detail || 'Could not reject request.'));
-        }
-    } catch (error) {
-        alert('❌ Network error. Please try again.');
-    }
+    updateRequestStatus(id, 'Rejected', '❌ Request rejected.');
 }
 
 async function fulfillRequest(id) {
     if (!confirm('Are you sure you want to FULFILL this request? This will decrease inventory.')) return;
+    updateRequestStatus(id, 'Fulfilled', '✅ Request fulfilled! Inventory has been updated.');
+}
 
+async function updateRequestStatus(id, status, successMessage) {
     try {
         const result = await apiRequest(`/requests/${id}`, {
             method: 'PUT',
-            body: JSON.stringify({ status: 'Fulfilled' })
+            body: JSON.stringify({ status: status })
         });
-
         if (result && (result.status === 200)) {
-            alert('✅ Request fulfilled! Inventory has been updated.');
+            alert(successMessage);
             loadRequests();
         } else {
-            alert('❌ Error: ' + (result?.data?.detail || 'Could not fulfill request.'));
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not update request.'));
         }
     } catch (error) {
         alert('❌ Network error. Please try again.');
@@ -197,17 +170,26 @@ function openRequestModal(requestData = null) {
     if (requestData) {
         title.textContent = 'Edit Blood Request';
         document.getElementById('requestId').value = requestData.id;
-        document.getElementById('reqPatientName').value = requestData.patient_name;
+        
+        // 🟢 Form အသစ်အတိုင်း Data Bind လုပ်ပေးခြင်း
+        document.getElementById('reqClinicName').value = requestData.clinic_name;
+        document.getElementById('reqLicense').value = requestData.license;
+        document.getElementById('reqContactPhone').value = requestData.contact_phone;
+        document.getElementById('reqContactEmail').value = requestData.contact_email;
+        document.getElementById('reqClinicAddress').value = requestData.clinic_address;
+        
         document.getElementById('reqBloodGroup').value = requestData.blood_group;
-        document.getElementById('reqRhFactor').value = requestData.rh_factor;
-        document.getElementById('reqQuantity').value = requestData.quantity_ml;
+        document.getElementById('reqQuantity').value = requestData.quantity_units;
         document.getElementById('reqUrgency').value = requestData.urgency;
+        document.getElementById('reqRequiredDate').value = requestData.required_date || '';
+        document.getElementById('reqPatientCondition').value = requestData.patient_condition || '';
         document.getElementById('reqStatus').value = requestData.status;
+        
         editingRequestId = requestData.id;
     } else {
         title.textContent = 'New Blood Request';
         document.getElementById('reqStatus').value = 'Pending';
-        document.getElementById('reqUrgency').value = 'Normal';
+        document.getElementById('reqUrgency').value = 'Normal Request';
     }
 
     modal.classList.add('show');
@@ -261,20 +243,20 @@ async function handleRequestSubmit(e) {
     const errorEl = document.getElementById('requestFormError');
     errorEl.style.display = 'none';
 
+    // 🟢 Payload ကို Backend API အသစ်နှင့် အတိအကျ ကိုက်ညီအောင် ပြင်ဆင်ထားသည်
     const requestData = {
-        patient_name: document.getElementById('reqPatientName').value,
+        clinic_name: document.getElementById('reqClinicName').value,
+        license: document.getElementById('reqLicense').value,
+        contact_phone: document.getElementById('reqContactPhone').value,
+        contact_email: document.getElementById('reqContactEmail').value,
+        clinic_address: document.getElementById('reqClinicAddress').value,
         blood_group: document.getElementById('reqBloodGroup').value,
-        rh_factor: document.getElementById('reqRhFactor').value,
-        quantity_ml: parseInt(document.getElementById('reqQuantity').value),
+        quantity_units: parseInt(document.getElementById('reqQuantity').value),
         urgency: document.getElementById('reqUrgency').value,
+        required_date: document.getElementById('reqRequiredDate').value,
+        patient_condition: document.getElementById('reqPatientCondition').value,
         status: document.getElementById('reqStatus').value
     };
-
-    if (!requestData.patient_name || !requestData.blood_group || !requestData.rh_factor) {
-        errorEl.textContent = 'Patient name, blood group, and Rh factor are required.';
-        errorEl.style.display = 'block';
-        return;
-    }
 
     try {
         let result;
