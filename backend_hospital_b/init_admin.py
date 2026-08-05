@@ -11,38 +11,35 @@ import uuid
 def create_admin_user():
     db = SessionLocal()
     try:
-        # Hospital B ကို ရှာပါ
         hospital = db.query(Hospital).filter(Hospital.name == "Hospital B").first()
         if not hospital:
             print("❌ Hospital B not found. Please run SQL scripts first.")
             return
 
-        # Admin User (admin_b) ရှိပြီးသားလား စစ်ပါ
         existing_user = db.query(User).filter(User.username == "admin_b").first()
         if existing_user:
-            print(f"⚠️ Admin user 'admin_b' already exists (ID: {existing_user.id})")
+            print(f"⚠️ Admin user already exists (ID: {existing_user.id})")
+            existing_user.hashed_password = AuthService.get_password_hash("admin123")
+            db.commit()
+            print(f"✅ Password updated for existing Admin")
             return
 
-        # Admin User အသစ်ဖန်တီးပါ
         admin_user = User(
             id=uuid.uuid4(),
             hospital_id=hospital.id,
-            username="admin_b",  # ✅ admin_b ဖြစ်ရမယ်
+            username="admin_b",
             hashed_password=AuthService.get_password_hash("admin123"),
             full_name="Hospital B Administrator",
             role="Hospital_Admin",
             is_active=True,
-            is_approved=True  # ✅ ဒါကို ထည့်ပါ
+            is_approved=True
         )
         db.add(admin_user)
         db.commit()
-        db.refresh(admin_user)
         print(f"✅ Admin user created successfully!")
         print(f"   Username: admin_b")
         print(f"   Password: admin123")
         print(f"   Role: Hospital_Admin")
-        print(f"   ID: {admin_user.id}")
-
     except Exception as e:
         print(f"❌ Error: {e}")
         db.rollback()

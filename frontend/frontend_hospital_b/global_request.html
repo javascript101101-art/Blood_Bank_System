@@ -22,8 +22,12 @@
     </div>
 
     <div class="main-content">
-        <div class="top-bar">
+        <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center;">
             <h1>🌐 Request Blood from Global</h1>
+            <!-- 🆕 Global ဆီမှ Data လှမ်းဆွဲမည့် Sync ခလုတ် -->
+            <button onclick="syncFromGlobal()" class="btn btn-secondary" style="background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                🔄 Sync / Pull from Global
+            </button>
         </div>
 
         <div class="card">
@@ -79,16 +83,17 @@
                     <thead>
                         <tr>
                             <th>Blood Group</th>
-                            <th>Rh Factor</th>   <!-- 🆕 ထည့်ပါ -->
+                            <th>Rh Factor</th>
                             <th>Quantity</th>
                             <th>Urgency</th>
                             <th>Status</th>
                             <th>Assigned To</th>
                             <th>Requested At</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="requestsBody">
-                        <tr><td colspan="7">Loading...</td></tr>  <!-- colspan 6 → 7 -->
+                        <tr><td colspan="8">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>

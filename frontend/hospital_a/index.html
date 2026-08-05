@@ -1,36 +1,65 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Blood Bank Login</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital A - Blood Bank Login</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-box">
-            <div class="login-header">
-                <h1>🩸 Hospital A</h1>
-                <p>Blood Bank Management System</p>
-            </div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Login</button>
-                <div id="loginError" class="error-message" style="display:none;"></div>
-            </form>
-            <p style="text-align:center; margin-top:16px;">
-                Don't have an account? <a href="register.html">Register here</a>
-            </p>
-        </div>
+<body class="bg-cover bg-center bg-no-repeat bg-fixed min-h-screen flex items-center justify-center relative p-4" 
+      style="background-image: url('https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=1600');">
+
+  <!-- Background Dark Overlay -->
+  <div class="absolute inset-0 bg-slate-900/65"></div>
+
+  <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden my-auto border border-slate-100">
+    
+    <div class="bg-slate-800 text-white p-6 text-center">
+      <div class="flex justify-center items-center gap-2 text-2xl font-bold mb-1">
+        <span>🩺</span>
+        <span>Hospital A</span>
+      </div>
+      <p class="text-slate-300 text-xs sm:text-sm">Blood Bank Management System</p>
     </div>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
+
+    <form id="loginForm" class="p-6 sm:p-8 space-y-5 text-sm">
+
+      <!-- Username Input -->
+      <div>
+        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-2">Username *</label>
+        <input type="text" id="username" required placeholder="Enter your username" 
+               class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50 text-slate-800 text-sm">
+      </div>
+
+      <!-- Password Input -->
+      <div>
+        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-2">Password *</label>
+        <input type="password" id="password" required placeholder="Enter your password" 
+               class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-700 bg-slate-50 text-slate-800 text-sm">
+      </div>
+
+      <!-- Error / Success Message Box -->
+      <div id="loginError" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-center text-xs font-medium"></div>
+
+      <!-- Submit Button -->
+      <div class="pt-2">
+        <button type="submit" 
+                class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition duration-200 shadow-lg shadow-slate-800/20 text-sm flex items-center justify-center gap-2">
+          <span>🔐</span> Login
+        </button>
+      </div>
+
+      <!-- Register Account Link -->
+      <div class="text-center pt-2 text-slate-500 text-xs">
+        Don't have an account? 
+        <a href="register1.html" class="text-slate-800 font-bold hover:underline">Register here</a>
+      </div>
+
+    </form>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

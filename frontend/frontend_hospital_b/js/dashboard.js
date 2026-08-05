@@ -82,7 +82,7 @@ async function loadSyncStatus() {
 }
 
 // ============================================
-// Manual Sync (NEW)
+// Manual Sync (UPDATED for Two-way Sync)
 // ============================================
 async function manualSync() {
     const syncBtn = document.getElementById('syncBtn');
@@ -96,13 +96,25 @@ async function manualSync() {
         
         if (result && result.status === 200) {
             const data = result.data;
-            if (data.synced > 0) {
-                alert(`✅ Sync completed!\nSynced: ${data.synced}\nFailed: ${data.failed}\nConflicts: ${data.conflicts}`);
+            
+            // Backend မှ အသစ်ပြင်ထားသော (Push + Pull) Response ကို ခွဲထုတ်ခြင်း
+            const pushData = data.push_result || { synced: 0, failed: 0, conflicts: 0 };
+            const pullData = data.pull_result || { pulled: 0 };
+            
+            if (pushData.synced > 0 || pullData.pulled > 0) {
+                let msg = `✅ Sync completed successfully!\n\n`;
+                msg += `📤 Sent to Global: ${pushData.synced} items (Failed: ${pushData.failed})\n`;
+                msg += `📥 Received from Global: ${pullData.pulled} updates`;
+                alert(msg);
             } else {
-                alert('ℹ️ No pending items to sync.');
+                alert('ℹ️ System is up to date. No pending items to sync.');
             }
+            
             // Reload stats
             loadSyncStatus();
+            
+            // ဇယားတွေရှိရင် Auto-refresh လုပ်ရန် (Optional)
+            if (typeof loadMyRequests === 'function') loadMyRequests();
         } else {
             alert('❌ Error syncing data. Please try again.');
         }
@@ -113,7 +125,6 @@ async function manualSync() {
         syncBtn.disabled = false;
     }
 }
-
 // ============================================
 // Load Recent Donors
 // ============================================

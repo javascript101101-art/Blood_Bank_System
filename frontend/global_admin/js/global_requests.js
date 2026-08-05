@@ -42,33 +42,45 @@ async function loadRequests() {
                 return;
             }
 
-            // ✅ Render Table Rows
+            // ✅ Render Table Rows with New Workflow Actions
             let html = '';
             result.data.forEach(req => {
                 let actions = '';
-                if (req.status === 'Pending') {
+                
+                // Status စစ်ဆေးခြင်း
+                if (req.status === 'PENDING' || req.status === 'Pending') {
                     actions = `
-                        <button class="btn btn-primary btn-sm" onclick="assignRequest('${req.id}')">📌 Assign</button>
+                        <!-- လမ်းကြောင်း ၁: Global မှ တိုက်ရိုက်ထုတ်ပေးရန် -->
+                        <button class="btn btn-success btn-sm" onclick="approveFromGlobal('${req.id}')">🩸 Approve (Global Stock)</button>
+                        
+                        <!-- လမ်းကြောင်း ၂: တခြားဆေးရုံကို လှမ်းတောင်းရန် -->
+                        <button class="btn btn-primary btn-sm" onclick="assignRequest('${req.id}')">🏥 Ask Hospital</button>
+                        
                         <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">❌ Reject</button>
                     `;
-                } else if (req.status === 'Assigned') {
+                } else if (req.status === 'ASSIGNED' || req.status === 'Assigned') {
                     actions = `
-                        <button class="btn btn-success btn-sm" onclick="approveRequest('${req.id}')">✅ Approve</button>
+                        <button class="btn btn-info btn-sm" onclick="fulfillRequest('${req.id}')">📦 Mark Fulfilled</button>
                         <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">❌ Reject</button>
                     `;
-                } else if (req.status === 'Approved') {
-                    actions = `<span class="status-badge status-approved">✅ Approved</span>`;
-                } else if (req.status === 'Fulfilled') {
-                    actions = `<span class="status-badge status-fulfilled">✅ Fulfilled</span>`;
-                } else if (req.status === 'Rejected') {
-                    actions = `<span class="status-badge status-rejected">❌ Rejected</span>`;
+                // 🟢 SUPPLIER_FULFILLED ပါ ထည့်သွင်းစစ်ဆေးထားသည်
+                } else if (req.status === 'FULFILLED' || req.status === 'Fulfilled' || req.status === 'SUPPLIER_FULFILLED' || req.status === 'Supplier_Fulfilled') {
+                    actions = `
+                        <button class="btn btn-warning btn-sm" onclick="deliverRequest('${req.id}')">🚚 Deliver Blood</button>
+                    `;
+                } else if (req.status === 'IN-TRANSIT' || req.status === 'In-Transit') {
+                    actions = `<span class="status-badge status-in-transit">🚚 In Transit</span>`;
+                } else if (req.status === 'DELIVERED' || req.status === 'Delivered') {
+                    actions = `<span class="status-badge status-delivered" style="color: green;">✅ Delivered</span>`;
+                } else if (req.status === 'REJECTED' || req.status === 'Rejected') {
+                    actions = `<span class="status-badge status-rejected" style="color: red;">❌ Rejected</span>`;
                 }
 
                 html += `
                     <tr>
                         <td>${req.requesting_hospital_id || 'Unknown'}</td>
                         <td><span class="badge">${req.blood_group}</span></td>
-                        <td>${req.rh_factor}</td>  <!-- 🆕 -->
+                        <td>${req.rh_factor}</td>
                         <td>${req.quantity_ml} ml</td>
                         <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
                         <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
@@ -79,7 +91,6 @@ async function loadRequests() {
             });
             
             tbody.innerHTML = html;
-            console.log('✅ Table rendered with', result.data.length, 'rows');
             
         } else {
             console.error('❌ Failed to load requests:', result);
@@ -92,19 +103,42 @@ async function loadRequests() {
 }
 
 // ============================================
-// Assign Request
+// 🩸 Approve From Global (Pending -> Fulfilled)
+// ============================================
+async function approveFromGlobal(id) {
+    if (!confirm('Global Inventory မှ သွေးထုတ်ပေးမည်မှာ သေချာပါသလား? (သွေးပို့ရန် အသင့်ဖြစ်ပါမည်)')) return;
+
+    try {
+        const result = await apiRequest(`/global-requests/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ 
+                status: 'Fulfilled',
+                assigned_hospital_id: null
+            })
+        });
+
+        if (result && result.status === 200) {
+            alert('✅ Global Stock မှ သွေးထုတ်ပေးရန် အသင့်ဖြစ်ပါပြီ။ (🚚 Deliver ဆက်လုပ်ပါ)');
+            loadRequests();
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not approve request.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+// ============================================
+// 🏥 Assign Request (Pending -> Assigned)
 // ============================================
 async function assignRequest(id) {
     const hospitalId = prompt('Enter hospital ID to assign:');
     if (!hospitalId) return;
 
     try {
-        const result = await apiRequest(`/global-requests/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                status: 'Assigned',
-                assigned_hospital_id: hospitalId
-            })
+        const result = await apiRequest(`/global-requests/${id}/assign`, {
+            method: 'POST',
+            body: JSON.stringify({ hospital_id: hospitalId })
         });
 
         if (result && result.status === 200) {
@@ -119,22 +153,21 @@ async function assignRequest(id) {
 }
 
 // ============================================
-// Approve Request
+// 📦 Fulfill Request (Assigned -> Fulfilled)
 // ============================================
-async function approveRequest(id) {
-    if (!confirm('Are you sure you want to APPROVE this request?')) return;
+async function fulfillRequest(id) {
+    if (!confirm('Are you sure this request is FULFILLED? (Blood has arrived at Global Inventory)')) return;
 
     try {
-        const result = await apiRequest(`/global-requests/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify({ status: 'Approved' })
+        const result = await apiRequest(`/global-requests/${id}/fulfill`, {
+            method: 'POST'
         });
 
         if (result && result.status === 200) {
-            alert('✅ Request approved successfully!');
+            alert('✅ Request fulfilled! Blood added to Global Inventory.');
             loadRequests();
         } else {
-            alert('❌ Error: ' + (result?.data?.detail || 'Could not approve request.'));
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not fulfill request.'));
         }
     } catch (error) {
         alert('❌ Network error. Please try again.');
@@ -142,7 +175,29 @@ async function approveRequest(id) {
 }
 
 // ============================================
-// Reject Request
+// 🚚 Deliver Request (Fulfilled -> In-Transit)
+// ============================================
+async function deliverRequest(id) {
+    if (!confirm('Are you sure you want to DELIVER this blood? (Blood will leave Global Inventory)')) return;
+
+    try {
+        const result = await apiRequest(`/global-requests/${id}/deliver`, {
+            method: 'POST'
+        });
+
+        if (result && result.status === 200) {
+            alert('🚚 Blood is now In-Transit to the requesting hospital!');
+            loadRequests();
+        } else {
+            alert('❌ Error: ' + (result?.data?.detail || 'Could not deliver blood.'));
+        }
+    } catch (error) {
+        alert('❌ Network error. Please try again.');
+    }
+}
+
+// ============================================
+// ❌ Reject Request
 // ============================================
 async function rejectRequest(id) {
     if (!confirm('Are you sure you want to REJECT this request?')) return;

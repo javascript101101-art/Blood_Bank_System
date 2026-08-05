@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import auth, sync_global, admin, global_requests  # ✅ အကုန်တစ်ခါတည်း
+from app.api.v1 import auth, sync_global, admin, global_requests
 from app.config import settings
+from app.api.v1 import global_inventory
 
 app = FastAPI(
     title=f"Blood Bank Global Server - {settings.SERVER_MODE.upper()} Mode",
@@ -26,6 +27,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(sync_global.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(global_requests.router, prefix="/api/v1")
+app.include_router(global_inventory.router, prefix="/api/v1")  # ✅ အသစ်ထည့်ထားသော Global Inventory Router
 
 @app.get("/")
 def root():

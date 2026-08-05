@@ -33,6 +33,29 @@ class GlobalSyncService:
             return {"success": success_ids, "failed": failed_ids, "conflicts": conflicts}
 
         for item in items:
+            # SyncQueue ကို အရင် Save (Commit) လုပ်မည်
+            try:
+                item_data_clean = {k: v for k, v in item.data.items() if k != '_updated_at'}
+                
+                sync_queue_entry = SyncQueue(
+                    id=item.id,
+                    hospital_id=hospital_id,
+                    table_name=item.table_name,
+                    record_id=item.record_id,
+                    operation=item.operation,
+                    data=item_data_clean,
+                    status="PENDING",
+                    created_at=item.created_at
+                )
+                db.add(sync_queue_entry)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                print(f"❌ Failed to save SyncQueue {item.id}: {e}")
+                failed_ids.append(item.id)
+                continue
+
+            # Main Logic
             try:
                 model_map = {
                     "donors": Donor,
@@ -47,40 +70,31 @@ class GlobalSyncService:
                     continue
 
                 print(f"🟢 Processing: {item.table_name} - ID: {item.record_id}")
-                print(f"🟢 Data: {item.data}")
-
-                # Create sync queue entry in global
-                sync_queue_entry = SyncQueue(
-                    id=item.id,
-                    hospital_id=hospital_id,
-                    table_name=item.table_name,
-                    record_id=item.record_id,
-                    operation=item.operation,
-                    data=item.data,
-                    status="PENDING",
-                    created_at=item.created_at
-                )
-                db.add(sync_queue_entry)
-                db.flush()
 
                 existing_record = db.query(model).filter(model.id == item.record_id).first()
 
                 if not existing_record:
                     # INSERT - Create new record
-                    item_data = {k: v for k, v in item.data.items() if k != 'id'}
+                    item_data = {k: v for k, v in item.data.items() if k not in ['id', '_updated_at']}
                     
-                    # 🆕 Check required fields for Donor
                     if model == Donor:
-                        # Ensure rh_factor exists
                         if 'rh_factor' not in item_data:
-                            print(f"⚠️ Missing rh_factor, using default 'Positive'")
                             item_data['rh_factor'] = 'Positive'
-                        # Ensure blood_group exists
                         if 'blood_group' not in item_data:
-                            print(f"⚠️ Missing blood_group, using default 'O'")
                             item_data['blood_group'] = 'O'
+
+                    # ==========================================
+                    # ✅ Table အလိုက် Status များကို ခွဲခြားပြင်ဆင်ခြင်း (INSERT)
+                    # ==========================================
+                    if 'status' in item_data and isinstance(item_data['status'], str):
+                        if item.table_name in ['blood_requests', 'global_blood_requests']:
+                            item_data['status'] = item_data['status'].upper()  # ဥပမာ - PENDING
+                        elif item.table_name == 'inventory':
+                            item_data['status'] = item_data['status'].title()  # ဥပမာ - Available
+
+                    if 'urgency' in item_data and isinstance(item_data['urgency'], str):
+                        item_data['urgency'] = item_data['urgency'].title()
                     
-                    # Special handling for GlobalBloodRequest (no hospital_id)
                     if model == GlobalBloodRequest:
                         new_record = model(**item_data, id=item.record_id)
                     else:
@@ -97,7 +111,13 @@ class GlobalSyncService:
                 local_updated = item.data.get("_updated_at") or item.created_at
                 global_updated = existing_record.updated_at if hasattr(existing_record, 'updated_at') else existing_record.created_at
 
-                if global_updated and local_updated and global_updated > local_updated:
+                if isinstance(local_updated, str):
+                    try:
+                        local_updated = datetime.fromisoformat(local_updated.replace("Z", "+00:00"))
+                    except ValueError:
+                        pass
+                
+                if global_updated and local_updated and isinstance(local_updated, datetime) and global_updated > local_updated:
                     print(f"⚠️ Conflict: {item.table_name} - {item.record_id}")
                     conflicts.append({
                         "id": str(item.id),
@@ -107,15 +127,26 @@ class GlobalSyncService:
                         "local_data": item.data,
                         "message": "Global data is newer than local data"
                     })
-                    db.commit()
                     GlobalSyncService._create_sync_log(db, item.id, "CONFLICT_DETECTED", conflict_details={
                         "global_updated": global_updated.isoformat(),
-                        "local_updated": local_updated.isoformat()
+                        "local_updated": local_updated.isoformat() if isinstance(local_updated, datetime) else str(local_updated)
                     })
                     continue
 
                 for key, value in item.data.items():
-                    if hasattr(existing_record, key) and key not in ["id", "hospital_id", "created_at"]:
+                    if hasattr(existing_record, key) and key not in ["id", "hospital_id", "created_at", "_updated_at"]:
+                        
+                        # ==========================================
+                        # ✅ Table အလိုက် Status များကို ခွဲခြားပြင်ဆင်ခြင်း (UPDATE)
+                        # ==========================================
+                        if key == 'status' and isinstance(value, str):
+                            if item.table_name in ['blood_requests', 'global_blood_requests']:
+                                value = value.upper()
+                            elif item.table_name == 'inventory':
+                                value = value.title()
+                        elif key == 'urgency' and isinstance(value, str):
+                            value = value.title()
+                            
                         setattr(existing_record, key, value)
                 
                 if model != GlobalBloodRequest:
