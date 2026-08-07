@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from app.database import get_db
 from app.middleware.auth_middleware import get_current_active_user, role_required
 from app.models.user import User
 from app.models.donor import Donor          # 🆕 Import Donor
 from app.models.inventory import Inventory  # 🆕 Import Inventory
-from app.models.blood_request import BloodRequest  # 🆕 Import BloodRequest
 from app.services.admin_service import AdminService
 from app.schemas.admin_schema import GlobalStats, SyncLogEntry
 
@@ -60,13 +59,14 @@ def get_all_inventory(
     return inventory
 
 # ============================================
-# 🆕 5. Get All Requests (All Hospitals)
+# 🆕 5. Get Low Stock Warnings (Global)
 # ============================================
-@router.get("/requests")
-def get_all_requests(
+@router.get("/low-stock-warnings")
+def get_low_stock_warnings(
+    threshold: int = 100,
     db: Session = Depends(get_db),
     current_user: User = Depends(role_required("Global_Admin"))
 ):
-    """ဆေးရုံအားလုံးရဲ့ Blood Request စာရင်းကို ပြန်ပေးပါ"""
-    requests = db.query(BloodRequest).all()
-    return requests
+    """Global Inventory တွင် သတ်မှတ်ထားသော ပမာဏအောက် ရောက်နေသော သွေးအမျိုးအစားများကို ပြန်ပေးပါ"""
+    warnings = AdminService.get_low_stock_warnings(db, threshold)
+    return {"alerts": warnings}

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadDashboardStats();
     loadSyncLogs();
+    loadLowStockWarnings(); // 🆕 Warning API ကို လှမ်းခေါ်မည့် Function အသစ်
 });
 
 // ============================================
@@ -57,6 +58,40 @@ async function loadDashboardStats() {
         document.querySelectorAll('.stat-info h3').forEach(el => {
             if (el.id !== 'totalHospitals') el.textContent = '--';
         });
+    }
+}
+
+// ============================================
+// 🆕 Load Low Stock Warnings from Global API
+// ============================================
+async function loadLowStockWarnings() {
+    const container = document.getElementById('lowStockAlertsContainer');
+    if (!container) return;
+
+    try {
+        // 🟢 Backend သို့ threshold=100 ဖြင့် Data လှမ်းတောင်းမည် (API Link ပြင်ထားပါသည်)
+        const result = await apiRequest('/global-inventory/low-stock-warnings?threshold=100', { method: 'GET' });
+        
+        if (result && result.status === 200 && result.data && result.data.alerts) {
+            const alerts = result.data.alerts;
+            
+            if (alerts.length > 0) {
+                let alertsHTML = '';
+                alerts.forEach(alert => {
+                    alertsHTML += `
+                        <div class="alert-warning">
+                            <span class="icon">⚠️</span>
+                            <span>${alert.warning_message}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = alertsHTML;
+            } else {
+                container.innerHTML = ''; // Warning မရှိပါက အလွတ်ထားမည်
+            }
+        }
+    } catch (error) {
+        console.error('Error loading low stock warnings:', error);
     }
 }
 

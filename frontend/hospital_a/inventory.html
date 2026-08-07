@@ -13,11 +13,13 @@
             <h2>🩸 Hospital A</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html">📊 Dashboard</a>
-            <a href="donors.html">👤 Donors</a>
-            <a href="inventory.html" class="active">📦 Inventory</a>
+            <a href="dashboard.html" class="active">📊 Dashboard</a>
+            <!-- 🟢 Staff များအတွက် ဖြုတ်နိုင်ရန် ID ထည့်ထားပါသည် -->
+            <a href="donors.html" id="navDonors">👤 Donors</a>
+            <a href="inventory.html">📦 Inventory</a>
             <a href="requests.html">📋 Requests</a>
-            <a href="global_request.html">🌐 Global Request</a>  <!-- 🆕 -->
+            <!-- 🟢 Global Request ဖြုတ်ရန် ID ထည့်ထားပါသည် -->
+            <a href="global_request.html" id="navGlobalRequest">🌐 Global Request</a>
             <a href="#" id="logoutBtn">🚪 Logout</a>
         </nav>
     </div>
@@ -26,6 +28,7 @@
     <div class="main-content">
         <div class="top-bar">
             <h1>📦 Inventory Management</h1>
+            <!-- 🟢 Staff များအတွက် အသစ်ထည့်မည့်ခလုတ်ကို ဖျောက်ရန် ID ထည့်ထားပါသည် -->
             <button class="btn btn-primary" id="addInventoryBtn">+ Add Inventory</button>
         </div>
 

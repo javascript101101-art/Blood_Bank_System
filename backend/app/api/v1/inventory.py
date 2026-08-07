@@ -27,6 +27,19 @@ def get_inventories(
     """သွေးတိုက်စာရင်းအားလုံး ကြည့်ရန်"""
     return InventoryService.get_inventories(db, current_user.hospital_id)
 
+# ============================================
+# 🆕 Low Stock Warnings (Local Hospital)
+# ============================================
+@router.get("/low-stock-warnings")
+def get_local_low_stock_warnings(
+    threshold: float = 500.0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Local Hospital ၏ Inventory တွင် သတ်မှတ်ထားသော ပမာဏအောက် ရောက်နေသော သွေးများကို သတိပေးရန်"""
+    warnings = InventoryService.get_low_stock_warnings(db, current_user.hospital_id, threshold)
+    return {"alerts": warnings}
+
 @router.get("/{inv_id}", response_model=InventoryResponse)
 def get_inventory(
     inv_id: UUID,

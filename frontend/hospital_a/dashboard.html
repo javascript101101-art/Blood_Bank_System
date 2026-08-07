@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital A - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- 🟢 🆕 Low Stock Warning အတွက် CSS Style -->
+    <style>
+        .alert-warning {
+            background-color: #ffcccc;
+            color: #cc0000;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #cc0000;
+            border-radius: 4px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .alert-warning span.icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -14,10 +32,12 @@
         </div>
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="active">📊 Dashboard</a>
-            <a href="donors.html">👤 Donors</a>
+            <!-- 🟢 Staff များအတွက် ဖြုတ်နိုင်ရန် ID ထည့်ထားပါသည် -->
+            <a href="donors.html" id="navDonors">👤 Donors</a>
             <a href="inventory.html">📦 Inventory</a>
             <a href="requests.html">📋 Requests</a>
-            <a href="global_request.html">🌐 Global Request</a>  <!-- 🆕 -->
+            <!-- 🟢 Global Request ဖြုတ်ရန် ID ထည့်ထားပါသည် -->
+            <a href="global_request.html" id="navGlobalRequest">🌐 Global Request</a>
             <a href="#" id="logoutBtn">🚪 Logout</a>
         </nav>
     </div>
@@ -31,6 +51,9 @@
                 <span class="badge" id="userRole">Hospital_Admin</span>
             </div>
         </div>
+
+        <!-- 🔴 🆕 Low Stock Warning Section -->
+        <div id="lowStockAlertsContainer"></div>
 
         <!-- Stats Cards -->
         <div class="stats-grid">
@@ -102,7 +125,7 @@
         </div>
 
         <!-- 🆕 User Management Section (Pending Staff Approvals) -->
-        <div class="user-management-section" style="margin-top: 30px;">
+        <div class="user-management-section" id="adminApprovalSection" style="margin-top: 30px;">
             <div class="card">
                 <div class="card-header">
                     <h3>👥 Pending Staff Approvals</h3>

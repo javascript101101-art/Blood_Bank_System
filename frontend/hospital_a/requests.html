@@ -14,10 +14,12 @@
         </div>
         <nav class="sidebar-nav">
             <a href="dashboard.html">📊 Dashboard</a>
-            <a href="donors.html">👤 Donors</a>
+            <!-- 🟢 Staff များအတွက် ဖြုတ်နိုင်ရန် ID ထည့်ထားပါသည် -->
+            <a href="donors.html" id="navDonors">👤 Donors</a>
             <a href="inventory.html">📦 Inventory</a>
             <a href="requests.html" class="active">📋 Requests</a>
-            <a href="global_request.html">🌐 Global Request</a>
+            <!-- 🟢 Global Request ဖြုတ်ရန် ID ထည့်ထားပါသည် -->
+            <a href="global_request.html" id="navGlobalRequest">🌐 Global Request</a>
             <a href="#" id="logoutBtn">🚪 Logout</a>
         </nav>
     </div>
@@ -35,7 +37,6 @@
                 <table id="requestsTable">
                     <thead>
                         <tr>
-                            <!-- 🟢 Table Header များကို အသစ်ပြောင်းထားပါသည် -->
                             <th>Clinic Name</th>
                             <th>Blood Group</th>
                             <th>Required Date</th>
@@ -66,31 +67,32 @@
                 
                 <h4 style="margin-bottom: 10px; color: #555;">🏥 CLINIC / HOSPITAL INFORMATION</h4>
                 
+                <!-- 🟢 Read-Only လုပ်ထားသော Clinic Input များ (Staff အတွက် Auto ပေါ်မည်) -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="reqClinicName">Clinic Name *</label>
-                        <input type="text" id="reqClinicName" required placeholder="e.g. City Health Clinic">
+                        <label for="reqClinicName">Clinic Name</label>
+                        <input type="text" id="reqClinicName" readonly style="background-color: #e9ecef;">
                     </div>
                     <div class="form-group">
-                        <label for="reqLicense">License *</label>
-                        <input type="text" id="reqLicense" required placeholder="e.g. REG-102938">
+                        <label for="reqLicense">License</label>
+                        <input type="text" id="reqLicense" readonly style="background-color: #e9ecef;">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="reqContactPhone">Contact Phone *</label>
-                        <input type="text" id="reqContactPhone" required placeholder="09xxxxxxxxx">
+                        <label for="reqContactPhone">Contact Phone</label>
+                        <input type="text" id="reqContactPhone" readonly style="background-color: #e9ecef;">
                     </div>
                     <div class="form-group">
-                        <label for="reqContactEmail">Contact Email *</label>
-                        <input type="email" id="reqContactEmail" required placeholder="clinic@example.com">
+                        <label for="reqContactEmail">Contact Email</label>
+                        <input type="email" id="reqContactEmail" readonly style="background-color: #e9ecef;">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="reqClinicAddress">Clinic Address *</label>
-                    <input type="text" id="reqClinicAddress" required placeholder="Street, Township, City">
+                    <label for="reqClinicAddress">Clinic Address</label>
+                    <input type="text" id="reqClinicAddress" readonly style="background-color: #e9ecef;">
                 </div>
 
                 <h4 style="margin-bottom: 10px; margin-top: 20px; color: #555;">🩸 BLOOD REQUEST DETAILS</h4>
@@ -136,7 +138,7 @@
                     <textarea id="reqPatientCondition" rows="3" placeholder="Brief explanation of patient condition or requirement..."></textarea>
                 </div>
 
-                <!-- ★★★ Admin အတွက် Status Dropdown (Staff Account ဆိုရင် js ကနေ ဖျောက်ပေးဖို့လိုမယ်) ★★★ -->
+                <!-- Admin အတွက် Status Dropdown -->
                 <div class="form-group" id="statusGroup">
                     <label for="reqStatus">Status</label>
                     <select id="reqStatus">

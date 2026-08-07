@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Admin - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 🆕 Warning Banner အတွက် Style အသစ် */
+        .alert-warning {
+            background-color: #ffcccc;
+            color: #cc0000;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #cc0000;
+            border-radius: 4px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .alert-warning span.icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -16,8 +34,7 @@
             <a href="dashboard.html" class="active">📊 Dashboard</a>
             <a href="donors.html">👤 All Donors</a>
             <a href="inventory.html">📦 All Inventory</a>
-            <a href="requests.html">📋 All Requests</a>
-            <a href="global_requests.html" class="active">🌐 Global Requests</a>  <!-- 🆕 -->
+            <a href="global_requests.html">🌐 Global Requests</a>  <!-- 🆕 -->
             <a href="sync_logs.html">📋 Sync Logs</a>
             <a href="#" id="logoutBtn">🚪 Logout</a>
         </nav>
@@ -32,6 +49,9 @@
                 <span class="badge" id="userRole">Global_Admin</span>
             </div>
         </div>
+
+        <!-- 🔴 🆕 Low Stock Warning Section -->
+        <div id="lowStockAlertsContainer"></div>
 
         <!-- Stats Cards (Clickable) -->
         <div class="stats-grid">

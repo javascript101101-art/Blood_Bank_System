@@ -13,10 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const user = getUser();
     currentUserRole = user?.role || 'Hospital_Admin';
 
-    // ★★★ Staff အတွက် Status Dropdown ကို ဖျောက်ပါ ★★★
-    const isStaff = currentUserRole === 'Lab_Staff' || currentUserRole === 'Receptionist';
+    // ★★★ Clinic အတွက် Status Dropdown ကို ဖျောက်ပါ ★★★
+    // 🟢 ဒီနေရာမှာ Clinic ဟု ပြောင်းထားပါသည်
+    const isClinic = currentUserRole === 'Clinic';
     const statusGroup = document.getElementById('statusGroup');
-    if (statusGroup && isStaff) {
+    if (statusGroup && isClinic) {
         statusGroup.style.display = 'none';
     }
 
@@ -41,6 +42,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
+// 🆕 Load Clinic Profile (Auto-Fill for Clinic)
+// ============================================
+async function loadClinicProfile() {
+    try {
+        const result = await apiRequest('/auth/profile', { method: 'GET' });
+        
+        if (result && result.status === 200 && result.data) {
+            const data = result.data;
+            
+            // HTML ထဲက Input ID များကို တိုက်ဆိုင်စစ်ဆေးပြီး Data ဖြည့်ပါမည်
+            const fields = [
+                { id: 'reqClinicName', value: data.clinic_name },
+                { id: 'reqLicense', value: data.license },
+                { id: 'reqContactPhone', value: data.contact_phone },
+                { id: 'reqContactEmail', value: data.contact_email },
+                { id: 'reqClinicAddress', value: data.clinic_address }
+            ];
+
+            fields.forEach(field => {
+                const inputEl = document.getElementById(field.id);
+                if (inputEl) {
+                    inputEl.value = field.value;
+                    inputEl.readOnly = true; // 🟢 ပြင်၍မရအောင် ပိတ်ထားမည်
+                    inputEl.style.backgroundColor = "#e9ecef"; // 🟢 မီးခိုးရောင် နောက်ခံလေးပြမည်
+                }
+            });
+        }
+    } catch (error) {
+        console.error("Could not load clinic profile:", error);
+    }
+}
+
+// ============================================
 // Load Requests (Role-based Actions)
 // ============================================
 async function loadRequests() {
@@ -63,7 +97,8 @@ async function loadRequests() {
                 let editDeleteButtons = '';
 
                 const isAdmin = currentUserRole === 'Hospital_Admin';
-                const isStaff = currentUserRole === 'Lab_Staff' || currentUserRole === 'Receptionist';
+                // 🟢 ဒီနေရာမှာ Clinic ဟု ပြောင်းထားပါသည်
+                const isClinic = currentUserRole === 'Clinic';
 
                 if (isAdmin) {
                     if (req.status === 'Pending') {
@@ -90,12 +125,11 @@ async function loadRequests() {
                     }
                 }
 
-                if (isStaff) {
+                if (isClinic) {
                     actionButtons = `<span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span>`;
                     editDeleteButtons = '';
                 }
 
-                // 🟢 HTML အသစ်နှင့် ကိုက်ညီအောင် Data Mapping ပြင်ဆင်ထားသည်
                 return `
                     <tr>
                         <td><strong>${req.clinic_name}</strong><br><small>${req.contact_phone}</small></td>
@@ -171,7 +205,6 @@ function openRequestModal(requestData = null) {
         title.textContent = 'Edit Blood Request';
         document.getElementById('requestId').value = requestData.id;
         
-        // 🟢 Form အသစ်အတိုင်း Data Bind လုပ်ပေးခြင်း
         document.getElementById('reqClinicName').value = requestData.clinic_name;
         document.getElementById('reqLicense').value = requestData.license;
         document.getElementById('reqContactPhone').value = requestData.contact_phone;
@@ -190,6 +223,12 @@ function openRequestModal(requestData = null) {
         title.textContent = 'New Blood Request';
         document.getElementById('reqStatus').value = 'Pending';
         document.getElementById('reqUrgency').value = 'Normal Request';
+        
+        // 🟢 ဒီနေရာမှာ Clinic ဟု ပြောင်းထားပါသည်
+        const isClinic = currentUserRole === 'Clinic';
+        if (isClinic) {
+            loadClinicProfile();
+        }
     }
 
     modal.classList.add('show');
@@ -203,7 +242,7 @@ function closeRequestModal() {
 }
 
 // ============================================
-// Edit Request (Admin Only)
+// Edit / Delete Request (Admin Only)
 // ============================================
 async function editRequest(id) {
     try {
@@ -216,12 +255,8 @@ async function editRequest(id) {
     }
 }
 
-// ============================================
-// Delete Request (Admin Only)
-// ============================================
 async function deleteRequest(id) {
     if (!confirm('Are you sure you want to delete this request?')) return;
-
     try {
         const result = await apiRequest(`/requests/${id}`, { method: 'DELETE' });
         if (result && (result.status === 204 || result.status === 200)) {
@@ -243,20 +278,28 @@ async function handleRequestSubmit(e) {
     const errorEl = document.getElementById('requestFormError');
     errorEl.style.display = 'none';
 
-    // 🟢 Payload ကို Backend API အသစ်နှင့် အတိအကျ ကိုက်ညီအောင် ပြင်ဆင်ထားသည်
-    const requestData = {
-        clinic_name: document.getElementById('reqClinicName').value,
-        license: document.getElementById('reqLicense').value,
-        contact_phone: document.getElementById('reqContactPhone').value,
-        contact_email: document.getElementById('reqContactEmail').value,
-        clinic_address: document.getElementById('reqClinicAddress').value,
+    // 🟢 Payload ဖွဲ့စည်းခြင်း (Backend Schema နှင့် ကိုက်ညီအောင် ပြင်ဆင်ထားသည်)
+    // အသစ်ဖန်တီးရာတွင် Clinic Data များ မလိုအပ်ပါ။ Backend က Auto ယူပါလိမ့်မည်။
+    let requestData = {
         blood_group: document.getElementById('reqBloodGroup').value,
         quantity_units: parseInt(document.getElementById('reqQuantity').value),
         urgency: document.getElementById('reqUrgency').value,
         required_date: document.getElementById('reqRequiredDate').value,
-        patient_condition: document.getElementById('reqPatientCondition').value,
-        status: document.getElementById('reqStatus').value
+        patient_condition: document.getElementById('reqPatientCondition').value
     };
+
+    // 🟢 Update လုပ်ခြင်း (Admin) ဖြစ်ပါက အချက်အလက်အပြည့်အစုံကို ထည့်ပေးရပါမည်
+    if (editingRequestId) {
+        requestData = {
+            ...requestData,
+            clinic_name: document.getElementById('reqClinicName').value,
+            license: document.getElementById('reqLicense').value,
+            contact_phone: document.getElementById('reqContactPhone').value,
+            contact_email: document.getElementById('reqContactEmail').value,
+            clinic_address: document.getElementById('reqClinicAddress').value,
+            status: document.getElementById('reqStatus').value
+        };
+    }
 
     try {
         let result;
@@ -268,7 +311,7 @@ async function handleRequestSubmit(e) {
         } else {
             result = await apiRequest('/requests/', {
                 method: 'POST',
-                body: JSON.stringify(requestData)
+                body: JSON.stringify(requestData) // 🟢 သွေးအမျိုးအစား၊ ပမာဏ စသည်တို့ကိုသာ ပို့ပါမည်
             });
         }
 
