@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import List, Optional
+from sqlalchemy import func
 from app.models.inventory import Inventory
 from app.models.sync import SyncQueue
 from app.schemas.inventory_schema import InventoryCreate, InventoryUpdate
@@ -67,6 +68,40 @@ class InventoryService:
         db.delete(inventory)
         db.commit()
         return True
+
+    # ============================================
+    # 🆕 Low Stock Warnings Logic (Local Hospital)
+    # ============================================
+    @staticmethod
+    def get_low_stock_warnings(db: Session, hospital_id: UUID, threshold: float = 500.0) -> List[dict]:
+        """
+        သတ်မှတ်ထားသော ဆေးရုံအတွက် သွေးအမျိုးအစားအလိုက် စုစုပေါင်းပမာဏကို တွက်ချက်ပြီး 
+        threshold (ဥပမာ - 500 ml) အောက် ရောက်နေသော သွေးများကို သတိပေးရန် စာရင်းထုတ်ပေးသည်
+        """
+        summary = db.query(
+            Inventory.blood_group,
+            Inventory.rh_factor,
+            func.sum(Inventory.quantity_ml).label("total_ml")
+        ).filter(
+            Inventory.hospital_id == hospital_id,
+            Inventory.status == "Available"
+        ).group_by(
+            Inventory.blood_group,
+            Inventory.rh_factor
+        ).having(func.sum(Inventory.quantity_ml) < threshold).all()
+
+        warnings = []
+        for item in summary:
+            current_total = item.total_ml or 0
+            warnings.append({
+                "blood_type": f"{item.blood_group} {item.rh_factor}",
+                "blood_group": item.blood_group,
+                "rh_factor": item.rh_factor,
+                "total_quantity": current_total,
+                "warning_message": f"Low Stock Warning: {item.blood_group} {item.rh_factor} has dropped to {current_total} ml."
+            })
+            
+        return warnings
 
     @staticmethod
     def _add_to_sync_queue(db: Session, inventory: Inventory, operation: str, delete: bool = False):

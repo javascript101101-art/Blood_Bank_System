@@ -541,3 +541,38 @@ table tr:hover {
 #pendingUsersTable .btn-sm {
     margin: 0 2px;
 }
+/* ===== Register Page ===== */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh; /* Form ရှည်ပါက Scroll ဆွဲ၍ရရန် min-height သုံးထားသည် */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 20px;
+}
+
+.register-box {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 550px; /* Form Input တွေများလာသဖြင့် Login ထက် အနည်းငယ် ပိုကျယ်ပေးထားသည် */
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.register-header h1 {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.register-header p {
+    color: #888;
+    font-size: 14px;
+}

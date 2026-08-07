@@ -1,5 +1,5 @@
 // ============================================
-// Dashboard (UPDATED with Sync Status)
+// Dashboard (UPDATED with Sync Status & Low Stock Warnings)
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     if (!isAuthenticated()) {
@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardStats();
     loadRecentDonors();
     loadSyncStatus();
+    loadPendingUsers();
+    loadLocalLowStockWarnings(); // 🆕 500 အောက် နည်းနေသော သွေးများအတွက် Warning စစ်ရန်
 
     // Sync Button
     const syncBtn = document.getElementById('syncBtn');
@@ -110,8 +112,10 @@ async function manualSync() {
                 alert('ℹ️ System is up to date. No pending items to sync.');
             }
             
-            // Reload stats
+            // Reload stats & warnings
             loadSyncStatus();
+            loadDashboardStats();
+            loadLocalLowStockWarnings();
             
             // ဇယားတွေရှိရင် Auto-refresh လုပ်ရန် (Optional)
             if (typeof loadMyRequests === 'function') loadMyRequests();
@@ -125,6 +129,7 @@ async function manualSync() {
         syncBtn.disabled = false;
     }
 }
+
 // ============================================
 // Load Recent Donors
 // ============================================
@@ -154,32 +159,40 @@ async function loadRecentDonors() {
 }
 
 // ============================================
-// Utility Functions
+// 🆕 Load Local Low Stock Warnings
 // ============================================
-function formatDateTime(dateString) {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+async function loadLocalLowStockWarnings() {
+    const container = document.getElementById('lowStockAlertsContainer');
+    if (!container) return;
+
+    try {
+        const result = await apiRequest('/inventory/low-stock-warnings?threshold=500', { method: 'GET' });
+        
+        if (result && result.status === 200 && result.data && result.data.alerts) {
+            const alerts = result.data.alerts;
+            
+            if (alerts.length > 0) {
+                let alertsHTML = '';
+                alerts.forEach(alert => {
+                    alertsHTML += `
+                        <div class="alert-warning">
+                            <span class="icon">⚠️</span>
+                            <span>${alert.warning_message}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = alertsHTML;
+            } else {
+                container.innerHTML = ''; // Warning မရှိပါက အလွတ်ထားမည်
+            }
+        }
+    } catch (error) {
+        console.error('Error loading local low stock warnings:', error);
+    }
 }
+
 // ============================================
 // 🆕 User Management - Pending Staff Approvals
-// ============================================
-
-// Load pending users when dashboard loads
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
-    
-    // Load pending users
-    loadPendingUsers();
-});
-
-// ============================================
-// Load Pending Users
 // ============================================
 async function loadPendingUsers() {
     const tbody = document.getElementById('pendingUsersBody');
@@ -234,8 +247,8 @@ async function approveUser(userId) {
 
         if (result && result.status === 200) {
             alert('✅ Staff account approved successfully!');
-            loadPendingUsers(); // Refresh the list
-            loadDashboardStats(); // Refresh stats
+            loadPendingUsers();
+            loadDashboardStats();
         } else {
             alert('❌ Error: ' + (result?.data?.detail || 'Could not approve user.'));
         }
@@ -258,7 +271,7 @@ async function rejectUser(userId) {
 
         if (result && result.status === 200) {
             alert('❌ Staff registration rejected.');
-            loadPendingUsers(); // Refresh the list
+            loadPendingUsers();
         } else {
             alert('❌ Error: ' + (result?.data?.detail || 'Could not reject user.'));
         }
@@ -268,8 +281,19 @@ async function rejectUser(userId) {
 }
 
 // ============================================
-// Utility: Format Date
+// Utility Functions
 // ============================================
+function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 function formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);

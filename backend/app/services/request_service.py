@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from app.models.blood_request import BloodRequest
 from app.models.inventory import Inventory
 from app.models.sync import SyncQueue
+from app.models.user import User
 from app.schemas.request_schema import BloodRequestCreate, BloodRequestUpdate
 from datetime import datetime
 
@@ -22,13 +23,35 @@ class RequestService:
 
     @staticmethod
     def create_request(db: Session, req_data: BloodRequestCreate, hospital_id: UUID, user_id: UUID) -> BloodRequest:
-        """သွေးလိုအပ်ချက်အသစ် ဖန်တီးရန်"""
-        req_data.status = "Pending"
+        """သွေးလိုအပ်ချက်အသစ် ဖန်တီးရန် (Clinic Data ကို Auto ဖြည့်သွင်းခြင်း)"""
+        
+        # 🟢 ၁။ Request တင်သည့် User နှင့် သူ၏ Clinic Profile ကို ရှာခြင်း
+        user = db.query(User).filter(User.id == user_id).first()
+        
+        if not user or not user.clinic_profile:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Clinic profile not found. Cannot auto-fill clinic details."
+            )
+            
+        profile = user.clinic_profile
+
+        # 🟢 ၂။ Blood Request Object တည်ဆောက်ရာတွင် Profile မှ Data များ ပေါင်းထည့်ခြင်း
+        request_dict = req_data.model_dump(exclude_unset=True)
+        # Frontend မှ မပို့သော Data များကို Profile မှ ယူ၍ ဖြည့်စွက်ပါမည်
         request = BloodRequest(
-            **req_data.model_dump(),
+            **request_dict,
             hospital_id=hospital_id,
-            requested_by_user_id=user_id
+            requested_by_user_id=user_id,
+            status="Pending",
+            # Clinic Data များကို ဤနေရာတွင် Auto ဖြည့်သွင်းပါသည်
+            clinic_name=profile.clinic_name,
+            license=profile.license,
+            contact_phone=profile.contact_phone,
+            contact_email=profile.contact_email,
+            clinic_address=profile.clinic_address
         )
+        
         db.add(request)
         db.commit()
         db.refresh(request)
@@ -37,9 +60,16 @@ class RequestService:
         return request
 
     @staticmethod
-    def get_requests(db: Session, hospital_id: UUID) -> List[BloodRequest]:
-        """သွေးလိုအပ်ချက်အားလုံး ကြည့်ရန်"""
-        return db.query(BloodRequest).filter(BloodRequest.hospital_id == hospital_id).all()
+    def get_requests(db: Session, hospital_id: UUID, current_user: User = None) -> List[BloodRequest]:
+        """သွေးလိုအပ်ချက်များ ကြည့်ရန် (Admin ဖြစ်လျှင် အားလုံး၊ Clinic ဖြစ်လျှင် ကိုယ်တောင်းထားသည်များကိုသာ ပြမည်)"""
+        
+        query = db.query(BloodRequest).filter(BloodRequest.hospital_id == hospital_id)
+        
+        # 🟢 ဝင်ရောက်လာသူသည် Clinic ဖြစ်ပါက ၎င်းတို့၏ User ID ဖြင့် တောင်းထားသည်များကိုသာ Filter လုပ်မည်
+        if current_user and current_user.role == "Clinic":
+            query = query.filter(BloodRequest.requested_by_user_id == current_user.id)
+            
+        return query.all()
 
     @staticmethod
     def get_request(db: Session, req_id: UUID, hospital_id: UUID) -> Optional[BloodRequest]:

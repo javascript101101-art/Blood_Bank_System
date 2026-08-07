@@ -82,3 +82,37 @@ def add_blood_to_global(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"သွေးထည့်သွင်းခြင်း မအောင်မြင်ပါ: {str(e)}"
         )
+
+# ==========================================
+# 🆕 ၄။ Low Stock Warning (Global Central Stock အတွက်)
+# ==========================================
+@router.get("/low-stock-warnings")
+def get_global_low_stock_warnings(
+    threshold: float = 100.0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Global_Admin"))
+):
+    """Global Central Stock တွင် သတ်မှတ်ထားသော ပမာဏအောက် (ဥပမာ - ၁၀၀ ml) ရောက်နေသော သွေးများကို သတိပေးရန်"""
+    
+    # GROUP BY လုပ်ပြီး SUM တွက်ချက်ကာ threshold အောက် ငယ်သည်များကိုသာ HAVING ဖြင့် Filter လုပ်ပါသည်
+    summary = db.query(
+        GlobalInventory.blood_group,
+        GlobalInventory.rh_factor,
+        func.sum(GlobalInventory.quantity_ml).label("total_ml")
+    ).group_by(
+        GlobalInventory.blood_group,
+        GlobalInventory.rh_factor
+    ).having(func.sum(GlobalInventory.quantity_ml) < threshold).all()
+
+    warnings = []
+    for item in summary:
+        current_total = item.total_ml or 0
+        warnings.append({
+            "blood_type": f"{item.blood_group} {item.rh_factor}",
+            "blood_group": item.blood_group,
+            "rh_factor": item.rh_factor,
+            "total_quantity": current_total,
+            "warning_message": f"Central Stock Warning: {item.blood_group} {item.rh_factor} is running low ({current_total} ml remaining)."
+        })
+        
+    return {"alerts": warnings}

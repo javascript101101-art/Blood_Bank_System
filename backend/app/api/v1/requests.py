@@ -23,15 +23,16 @@ def create_request(
     return RequestService.create_request(db, req_data, current_user.hospital_id, current_user.id)
 
 # ============================================
-# Get All Requests - အကုန်မြင်လို့ရတယ်
+# Get Requests - Admin ဆို အားလုံး၊ Staff ဆို ကိုယ့်ဟာကိုယ်
 # ============================================
 @router.get("/", response_model=List[BloodRequestResponse])
 def get_requests(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """သွေးလိုအပ်ချက်အားလုံး ကြည့်ရန်"""
-    return RequestService.get_requests(db, current_user.hospital_id)
+    """သွေးလိုအပ်ချက်များ ကြည့်ရန် (Admin ဖြစ်လျှင် အားလုံး၊ Staff ဖြစ်လျှင် ကိုယ့် Clinic သို့မဟုတ် ကိုယ်တောင်းထားသည်များကိုသာ ပြမည်)"""
+    # 🟢 current_user ကိုပါ ထည့်ပေးထားပါသည်
+    return RequestService.get_requests(db, current_user.hospital_id, current_user)
 
 # ============================================
 # Get Single Request - အကုန်မြင်လို့ရတယ်

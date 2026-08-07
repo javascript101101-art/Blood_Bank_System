@@ -5,6 +5,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.user import User
+from app.models.clinic_profile import ClinicProfile  # 🟢 Clinic Profile ကို Import လုပ်ထားပါသည်
 from app.schemas.auth_schema import RegisterRequest
 import uuid
 
@@ -36,7 +37,7 @@ class AuthService:
         except JWTError:
             return None
 
-    # 🆕 Self-Registration
+    # 🆕 Self-Registration (Clinic Data ပါ တစ်ပြိုင်နက်တည်း ထည့်ပေးမည်)
     @staticmethod
     def register_user(db: Session, register_data: RegisterRequest, hospital_id: str) -> dict:
         # ၁။ Username ရှိပြီးသားလား စစ်ပါ
@@ -56,6 +57,22 @@ class AuthService:
             is_approved=False  # Admin က Approve လုပ်မှသာ Login ဝင်လို့ရမယ်
         )
         db.add(new_user)
+        # 🟢 ချက်ချင်း Commit မလုပ်သေးဘဲ ID ထွက်လာအောင် flush အရင်လုပ်ပါမယ်
+        db.flush()
+
+        # ၃။ 🟢 Clinic ဖြစ်ခဲ့ရင် ClinicProfile Table ထဲကိုပါ Data တစ်ခါတည်း ထည့်ပါမယ် (ဒီနေရာကို ပြင်ထားပါသည်)
+        if register_data.role == "Clinic":
+            clinic_profile = ClinicProfile(
+                user_id=new_user.id,
+                clinic_name=register_data.clinic_name,
+                license=register_data.license,
+                contact_phone=register_data.contact_phone,
+                contact_email=register_data.contact_email,
+                clinic_address=register_data.clinic_address
+            )
+            db.add(clinic_profile)
+
+        # ၄။ အကုန်အဆင်ပြေမှ Table (၂) ခုလုံးအတွက် တစ်ပြိုင်နက်တည်း Save (Commit) လုပ်ပါမယ်
         db.commit()
         db.refresh(new_user)
 
