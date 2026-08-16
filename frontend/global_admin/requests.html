@@ -4,55 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Admin - All Requests</title>
+    
+    <!-- FontAwesome (Icons) အနည်းငယ် ထည့်သွင်းထားပါသည် -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <!-- Sidebar -->
+<body class="bg-animated">
+<!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🌐 Global Admin</h2>
+            <h2><i class="fas fa-globe" style="color: var(--medical-cyan);"></i> Central Hub</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="active">📊 Dashboard</a>
-            <a href="donors.html">👤 All Donors</a>
-            <a href="inventory.html">📦 All Inventory</a>
-            <a href="global_requests.html" class="active">🌐 Global Requests</a>  <!-- 🆕 -->
-            <a href="sync_logs.html">📋 Sync Logs</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-chart-pie"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html"><i class="fas fa-users"></i> သွေးလှူရှင်အားလုံး</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်အားလုံး</a>
+            <!-- 🟢 requests.html ကို အသစ်ထည့်သွင်းထားပါသည် -->
+            <a href="requests.html" ><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာအားလုံး</a>
+            <a href="global_requests.html"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှုများ</a>
+            <a href="sync_logs.html"><i class="fas fa-history"></i> ချိတ်ဆက်မှုမှတ်တမ်းများ</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်ရန်</a>
         </nav>
     </div>
-
     <div class="main-content">
         <div class="top-bar">
-            <h1>📋 All Blood Requests (All Hospitals)</h1>
+            <h1><i class="fas fa-clipboard-list" style="color: var(--medical-cyan); margin-right: 10px;"></i> All Blood Requests (All Hospitals)</h1>
             <div class="user-info">
-                <span id="userName">Global Admin</span>
-                <span class="badge" id="userRole">Global_Admin</span>
+                <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <span id="userName">Global Admin</span>
+                    <span class="badge" id="userRole">GLOBAL_ADMIN</span>
+                </div>
             </div>
         </div>
 
         <div class="filters-section" style="margin-bottom: 20px;">
             <div class="card">
-                <div class="card-body" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div class="card-body" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label for="filterHospital" style="font-weight: 600; font-size: 14px;">Hospital</label>
-                        <select id="filterHospital" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                            <option value="all">All Hospitals</option>
+                        <label for="filterHospital" style="font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.8);">Hospital</label>
+                        <select id="filterHospital" style="padding: 8px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; min-width: 150px;">
+                            <option value="all" style="color: #000;">All Hospitals</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label for="filterStatus" style="font-weight: 600; font-size: 14px;">Status</label>
-                        <select id="filterStatus" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                            <option value="all">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Fulfilled">Fulfilled</option>
-                            <option value="Rejected">Rejected</option>
+                        <label for="filterStatus" style="font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.8);">Status</label>
+                        <select id="filterStatus" style="padding: 8px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; min-width: 150px;">
+                            <option value="all" style="color: #000;">All Status</option>
+                            <option value="Pending" style="color: #000;">Pending</option>
+                            <option value="Approved" style="color: #000;">Approved</option>
+                            <option value="Fulfilled" style="color: #000;">Fulfilled</option>
+                            <option value="Rejected" style="color: #000;">Rejected</option>
                         </select>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
-                        <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
-                        <button id="resetFiltersBtn" class="btn btn-secondary" style="margin-left: 8px; background: #6c757d; color: white;">Reset</button>
+                    <div class="form-group" style="margin-bottom: 0; display: flex; gap: 10px;">
+                        <button id="applyFiltersBtn" class="btn btn-primary" style="border-radius: 50px; padding: 8px 18px;">Apply Filters</button>
+                        <button id="resetFiltersBtn" class="btn btn-secondary" style="border-radius: 50px; padding: 8px 18px;">Reset</button>
                     </div>
                 </div>
             </div>
@@ -64,16 +71,18 @@
                     <thead>
                         <tr>
                             <th>Hospital</th>
-                            <th>Patient Name</th>
+                            <th>Clinic Name</th>          <!-- 🟢 ပြင်ဆင်ထားသည် -->
+                            <th>Blood Component</th>    <!-- 🟢 အသစ်တိုးထားသည် -->
                             <th>Blood Group</th>
-                            <th>Quantity (ml)</th>
+                            <th>Required Date</th>      <!-- 🟢 အသစ်တိုးထားသည် -->
+                            <th>Quantity (Units)</th>   <!-- 🟢 ပြင်ဆင်ထားသည် -->
                             <th>Urgency</th>
                             <th>Status</th>
                             <th>Requested At</th>
                         </tr>
                     </thead>
                     <tbody id="requestsBody">
-                        <tr><td colspan="7">Loading...</td></tr>
+                        <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">Loading...</td></tr> <!-- 🟢 colspan 9 သို့ ပြောင်းထားသည် -->
                     </tbody>
                 </table>
             </div>

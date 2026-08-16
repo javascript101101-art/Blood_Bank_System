@@ -21,6 +21,7 @@ async function handleSubmit(e) {
     const requestData = {
         blood_group: document.getElementById('reqBloodGroup').value,
         rh_factor: document.getElementById('reqRhFactor').value,
+        blood_component: document.getElementById('reqBloodComponent').value, // 🟢 Component တန်ဖိုးကို ယူလိုက်ပါပြီ
         quantity_ml: parseInt(document.getElementById('reqQuantity').value),
         urgency: document.getElementById('reqUrgency').value,
         request_note: document.getElementById('reqNote').value || null
@@ -48,7 +49,8 @@ async function handleSubmit(e) {
 
 async function loadMyRequests() {
     const tbody = document.getElementById('requestsBody');
-    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+    // 🟢 ကော်လံ (၉) ခုဖြစ်သွားသဖြင့် colspan ကို 9 သို့ ပြောင်းထားပါသည်
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Loading...</td></tr>';
 
     try {
         console.log('Fetching global requests...');
@@ -57,12 +59,12 @@ async function loadMyRequests() {
 
         if (result && result.status === 200 && result.data) {
             if (result.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8">No global requests found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No global requests found.</td></tr>';
                 return;
             }
             
             tbody.innerHTML = result.data.map(req => {
-                // 🟢 Action Button ကို Status ပေါ်မူတည်ပြီး ရွေးချယ်မည်
+                // Action Button ကို Status ပေါ်မူတည်ပြီး ရွေးချယ်မည်
                 let actionBtn = '-';
                 const statusUpper = req.status.toUpperCase();
                 
@@ -75,10 +77,14 @@ async function loadMyRequests() {
                     actionBtn = `<button onclick="fulfillBlood('${req.id}')" class="btn btn-sm btn-primary" style="background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📦 Send Blood</button>`;
                 }
 
+                // 🟢 Component အသစ်ကို ဇယားထဲတွင် ပြသရန် ထည့်သွင်းထားပါသည်
+                const componentDisplay = req.blood_component ? req.blood_component.replace('_', ' ') : 'Whole Blood';
+
                 return `
                 <tr>
                     <td><span class="badge">${req.blood_group}</span></td>
                     <td>${req.rh_factor}</td>
+                    <td><span class="badge" style="background-color: #e2e8f0; color: #475569;">${componentDisplay}</span></td> <!-- 🆕 -->
                     <td>${req.quantity_ml} ml</td>
                     <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
                     <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
@@ -90,16 +96,16 @@ async function loadMyRequests() {
             }).join('');
         } else {
             console.error('Failed to load requests:', result);
-            tbody.innerHTML = '<tr><td colspan="8">Error loading requests. Please check console.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color: red;">Error loading requests. Please check console.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading requests:', error);
-        tbody.innerHTML = '<tr><td colspan="8">Error loading requests.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color: red;">Error loading requests.</td></tr>';
     }
 }
 
 // ==========================================
-// 🆕 Global သို့ သွေးပေးပို့ရန် (Fulfill)
+// Global သို့ သွေးပေးပို့ရန် (Fulfill)
 // ==========================================
 async function fulfillBlood(reqId) {
     if (!confirm('Are you sure you want to send this blood? \n(It will be deducted from your Local Inventory)')) {

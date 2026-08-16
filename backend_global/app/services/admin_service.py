@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List, Dict, Any  # 🟢 Dict, Any ကိုပါ ထပ်ထည့်ထားပါသည်
+from typing import List, Dict, Any
+from uuid import UUID  # 🟢 UUID ကို အမှန်တကယ် import လုပ်ထားရပါမည်
 from app.models.hospital import Hospital
 from app.models.donor import Donor
 from app.models.inventory import Inventory
@@ -69,7 +70,7 @@ class AdminService:
         results = db.query(
             Inventory.blood_group,
             Inventory.rh_factor,
-            func.sum(Inventory.quantity_ml).label('total_quantity') # 💡 မှတ်ချက်: quantity_ml အစား quantity_units သုံးထားလျှင် ပြောင်းပေးပါ
+            func.sum(Inventory.quantity_ml).label('total_quantity')
         ).filter(
             Inventory.status == "Available" # Available ဖြစ်နေတဲ့ သွေးတွေကိုပဲ တွက်မယ်
         ).group_by(
@@ -81,7 +82,7 @@ class AdminService:
             current_total = total if total else 0
             if current_total < threshold:
                 low_stock_alerts.append({
-                    "blood_type": f"{bg} {rh}", # ဥပမာ: "O Positive"
+                    "blood_type": f"{bg} {rh}",
                     "blood_group": bg,
                     "rh_factor": rh,
                     "total_quantity": current_total,
@@ -89,3 +90,13 @@ class AdminService:
                 })
                 
         return low_stock_alerts
+
+    # ============================================
+    # 🆕 Global Admin: Get Specific Donor History
+    # ============================================
+    @staticmethod
+    def get_donor_history(db: Session, donor_id: UUID) -> List[Inventory]:
+        """Global Admin အတွက် သွေးလှူရှင် ID ဖြင့် ဆေးရုံအသီးသီးရှိ သွေးစာရင်း/မှတ်တမ်းများကို ရယူရန်"""
+        return db.query(Inventory).filter(
+            Inventory.donor_id == donor_id
+        ).order_by(Inventory.created_at.desc()).all()

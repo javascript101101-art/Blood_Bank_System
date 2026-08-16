@@ -3,133 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Admin - All Inventory</title>
+    <title>Global Admin - သွေးလက်ကျန်အားလုံး</title>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Global Admin Base CSS -->
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Modal Style for Add Blood Form */
-        .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
-            width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);
-            justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background-color: #fff; padding: 20px; border-radius: 8px;
-            width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .modal-header h3 { margin: 0; }
-        .close-btn { cursor: pointer; font-size: 20px; font-weight: bold; border: none; background: none; }
-    </style>
+    <!-- Inventory အတွက် သီးသန့်ခွဲထုတ်ထားသော CSS -->
+    <link rel="stylesheet" href="css/inventory.css">
 </head>
-<body>
-    <!-- Sidebar -->
+<body class="bg-animated">
+    
+<!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🌐 Global Admin</h2>
+            <h2><i class="fas fa-globe" style="color: var(--medical-cyan);"></i> Central Hub</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html">📊 Dashboard</a>
-            <a href="donors.html">👤 All Donors</a>
-            <a href="inventory.html" class="active">📦 All Inventory</a>
-            <a href="global_requests.html">🌐 Global Requests</a>
-            <a href="sync_logs.html">📋 Sync Logs</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-chart-pie"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html"><i class="fas fa-users"></i> သွေးလှူရှင်အားလုံး</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်အားလုံး</a>
+            <!-- 🟢 requests.html ကို အသစ်ထည့်သွင်းထားပါသည် -->
+            <a href="requests.html" ><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာအားလုံး</a>
+            <a href="global_requests.html"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှုများ</a>
+            <a href="sync_logs.html"><i class="fas fa-history"></i> ချိတ်ဆက်မှုမှတ်တမ်းများ</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်ရန်</a>
         </nav>
     </div>
-
     <div class="main-content">
         <div class="top-bar">
-            <h1>📦 Blood Inventory Management</h1>
+            <h1><i class="fas fa-boxes" style="color: var(--medical-cyan); margin-right: 10px;"></i> သွေးလက်ကျန် စီမံခန့်ခွဲမှု</h1>
             <div class="user-info">
-                <span id="userName">Global Admin</span>
-                <span class="badge" id="userRole">Global_Admin</span>
+                <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <span id="userName">Global Admin</span>
+                    <span class="badge" id="userRole">GLOBAL_ADMIN</span>
+                </div>
             </div>
         </div>
 
         <!-- ========================================== -->
-        <!-- ၁။ 🏦 Global Central Stock Section (အသစ်)  -->
+        <!-- ၁။ 🏦 Global Central Stock Section          -->
         <!-- ========================================== -->
-        <div class="card" style="margin-bottom: 30px; border-top: 4px solid #28a745;">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #eee;">
-                <h2 style="margin: 0; color: #28a745;">🏦 Global Central Stock</h2>
-                <button class="btn btn-success" onclick="openAddBloodModal()">➕ Add Blood to Global</button>
+        <div class="card inventory-section-card global-stock-header">
+            <div class="card-header">
+                <h2><i class="fas fa-globe-asia" style="color: var(--medical-cyan);"></i> ကမ္ဘာ့ဗဟိုလက်ကျန်</h2>
+                <button class="btn btn-primary" onclick="openAddBloodModal()"><i class="fas fa-plus-circle"></i> ကမ္ဘာ့ဗဟိုသို့ သွေးထည့်ရန်</button>
             </div>
             <div class="card-body">
                 <table id="globalInventoryTable">
                     <thead>
                         <tr>
-                            <th>Blood Group</th>
+                            <th>သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <th>Total Quantity (ml)</th>
+                            <th>အမျိုးအစား (Component)</th> <!-- 🟢 ဤကော်လံ ထပ်ဖြည့်ထားပါသည် -->
+                            <th>စုစုပေါင်း ပမာဏ (ml)</th>
                         </tr>
                     </thead>
                     <tbody id="globalInventoryBody">
-                        <tr><td colspan="3">Loading Global Stock...</td></tr>
+                        <!-- 🟢 colspan ကို 3 မှ 4 သို့ ပြောင်းထားပါသည် -->
+                        <tr><td colspan="4" class="text-muted" style="color: var(--text-muted);">ကမ္ဘာ့လက်ကျန် ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
         <!-- ========================================== -->
-        <!-- ၂။ 🏥 Local Hospitals' Inventory Section  -->
+        <!-- ၂။ 🏥 Local Hospitals' Inventory Section   -->
         <!-- ========================================== -->
-        <div class="card" style="border-top: 4px solid #007bff;">
-            <div class="card-header" style="padding: 15px 20px; border-bottom: 1px solid #eee;">
-                <h2 style="margin: 0; color: #007bff;">🏥 Hospitals' Inventory (Synced)</h2>
+        <div class="card inventory-section-card hospital-stock-header">
+            <div class="card-header">
+                <h2><i class="fas fa-hospital" style="color: var(--hospital-blue);"></i> ဆေးရုံများ၏ သွေးလက်ကျန်</h2>
             </div>
-            <div class="filters-section" style="padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; gap: 16px; flex-wrap: wrap;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="filterHospital" style="font-weight: 600; font-size: 14px;">Hospital</label>
-                    <select id="filterHospital" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                        <option value="all">All Hospitals</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="filterBloodGroup" style="font-weight: 600; font-size: 14px;">Blood Group</label>
-                    <select id="filterBloodGroup" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                        <option value="all">All Blood Groups</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="AB">AB</option>
-                        <option value="O">O</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
-                    <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
-                    <button id="resetFiltersBtn" class="btn btn-secondary" style="margin-left: 8px; background: #6c757d; color: white;">Reset</button>
+            
+            <!-- Filters -->
+            <div class="filters-section">
+                <div class="form-group" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="filterHospital">ဆေးရုံ</label>
+                        <select id="filterHospital">
+                            <option value="all">ဆေးရုံအားလုံး</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="filterBloodGroup">သွေးအုပ်စု</label>
+                        <select id="filterBloodGroup">
+                            <option value="all">သွေးအုပ်စုအားလုံး</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
+                        <button id="applyFiltersBtn" class="btn btn-primary">စစ်ထုတ်ရန်</button>
+                        <button id="resetFiltersBtn" class="btn btn-secondary">ပြန်လည်သတ်မှတ်ရန်</button>
+                    </div>
                 </div>
             </div>
+
             <div class="card-body">
                 <table id="inventoryTable">
                     <thead>
                         <tr>
-                            <th>Hospital</th>
-                            <th>Blood Group</th>
+                            <th>ဆေးရုံ</th>
+                            <th>သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <th>Quantity (ml)</th>
-                            <th>Expiry Date</th>
-                            <th>Status</th>
+                            <!-- 🟢 အမျိုးအစား (Component) ကော်လံ ထပ်တိုးခြင်း -->
+                            <th>အမျိုးအစား (Component)</th>
+                            <th>ပမာဏ (ml)</th>
+                            <th>သက်တမ်းကုန်ဆုံးရက်</th>
+                            <th>အခြေအနေ</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryBody">
-                        <tr><td colspan="6">Loading Hospital Stocks...</td></tr>
+                        <!-- 🟢 colspan ကို 6 မှ 7 သို့ ပြောင်းထားပါသည် -->
+                        <tr><td colspan="7" class="text-muted" style="color: var(--text-muted);">ဆေးရုံများ၏ လက်ကျန်ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- ➕ Add Blood Modal (Popup Form) -->
+    <!-- ➕ Add Blood Modal -->
     <div id="addBloodModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="color: #28a745;">➕ Add to Global Stock</h3>
+                <h3><i class="fas fa-plus-circle" style="color: var(--medical-cyan);"></i> ကမ္ဘာ့ဗဟိုသို့ သွေးထည့်ရန်</h3>
                 <button class="close-btn" onclick="closeAddBloodModal()">&times;</button>
             </div>
             <form id="addBloodForm">
                 <div class="form-group">
-                    <label>Blood Group:</label>
-                    <select id="newBloodGroup" class="form-control" required>
+                    <label>သွေးအုပ်စု :</label>
+                    <select id="newBloodGroup" required>
                         <option value="A">A</option>
                         <option value="B">B</option>
                         <option value="AB">AB</option>
@@ -137,31 +144,61 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Rh Factor:</label>
-                    <select id="newRhFactor" class="form-control" required>
+                    <label>Rh Factor :</label>
+                    <select id="newRhFactor" required>
                         <option value="Positive">Positive (+)</option>
                         <option value="Negative">Negative (-)</option>
                     </select>
                 </div>
+                
+                <!-- 🟢 အမျိုးအစား ရွေးချယ်ရန် ထပ်တိုးခြင်း -->
                 <div class="form-group">
-                    <label>Quantity (ml):</label>
-                    <input type="number" id="newQuantity" class="form-control" min="1" required placeholder="e.g., 500">
+                    <label>အမျိုးအစား (Component) :</label>
+                    <select id="newBloodComponent" required>
+                        <option value="Whole_Blood">Whole Blood (သွေးအိတ်စိမ်း)</option>
+                        <option value="Red_Cells">Red Cells (သွေးနီဥ)</option>
+                        <option value="Plasma">Plasma (သွေးရည်ကြည်)</option>
+                        <option value="Platelets">Platelets (သွေးဥမွှား)</option>
+                    </select>
                 </div>
-                <div style="margin-top: 20px; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddBloodModal()">Cancel</button>
-                    <button type="submit" class="btn btn-success" style="margin-left: 10px;">Save Blood</button>
+
+                <div class="form-group">
+                    <label>ပမာဏ (ml) :</label>
+                    <input type="number" id="newQuantity" min="1" required placeholder="ဥပမာ - 500">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddBloodModal()">ပယ်ဖျက်ရန်</button>
+                    <button type="submit" class="btn btn-success">သွေးထည့်သိမ်းရန်</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- JS Scripts -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/inventory.js"></script>
+
+    <!-- Original JS Modal Control (Function names and logic kept intact) -->
     <script>
-        // Modal အဖွင့်အပိတ် လုပ်ရန် JS အနည်းငယ်
-        function openAddBloodModal() { document.getElementById('addBloodModal').style.display = 'flex'; }
-        function closeAddBloodModal() { document.getElementById('addBloodModal').style.display = 'none'; }
+        function openAddBloodModal() {
+            document.getElementById('addBloodModal').style.display = 'flex';
+        }
+        function closeAddBloodModal() {
+            document.getElementById('addBloodModal').style.display = 'none';
+        }
+    </script>
+
+    <!-- UI Only Script: User Name Override -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) {
+                    userNameEl.textContent = 'User'; 
+                }
+            }, 100);
+        });
     </script>
 </body>
 </html>

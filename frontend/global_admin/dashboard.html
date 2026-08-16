@@ -3,84 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Admin - Dashboard</title>
+    <title>Global Admin - ပင်မစာမျက်နှာ</title>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Global Admin Base CSS -->
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* 🆕 Warning Banner အတွက် Style အသစ် */
-        .alert-warning {
-            background-color: #ffcccc;
-            color: #cc0000;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 5px solid #cc0000;
-            border-radius: 4px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-        }
-        .alert-warning span.icon {
-            font-size: 1.2em;
-            margin-right: 10px;
-        }
-    </style>
+    <!-- Dashboard အတွက် သီးသန့် CSS -->
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
-<body>
-    <!-- Sidebar -->
+<body class="bg-animated">
+    
+<!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🌐 Global Admin</h2>
+            <h2><i class="fas fa-globe" style="color: var(--medical-cyan);"></i> Central Hub</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="active">📊 Dashboard</a>
-            <a href="donors.html">👤 All Donors</a>
-            <a href="inventory.html">📦 All Inventory</a>
-            <a href="global_requests.html">🌐 Global Requests</a>  <!-- 🆕 -->
-            <a href="sync_logs.html">📋 Sync Logs</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-chart-pie"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html"><i class="fas fa-users"></i> သွေးလှူရှင်အားလုံး</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်အားလုံး</a>
+            <!-- 🟢 requests.html ကို အသစ်ထည့်သွင်းထားပါသည် -->
+            <a href="requests.html" ><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာအားလုံး</a>
+            <a href="global_requests.html"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှုများ</a>
+            <a href="sync_logs.html"><i class="fas fa-history"></i> ချိတ်ဆက်မှုမှတ်တမ်းများ</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်ရန်</a>
         </nav>
     </div>
-
     <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h1>Global Dashboard</h1>
+            <h1><i class="fas fa-chart-line" style="color: var(--medical-cyan); margin-right: 10px;"></i> ကမ္ဘာ့ပင်မစာမျက်နှာ</h1>
             <div class="user-info">
-                <span id="userName">Global Admin</span>
-                <span class="badge" id="userRole">Global_Admin</span>
+                <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <span id="userName">Global Admin</span>
+                    <span class="badge" id="userRole">GLOBAL_ADMIN</span>
+                </div>
             </div>
         </div>
 
-        <!-- 🔴 🆕 Low Stock Warning Section -->
+        <!-- 🔴 Low Stock Warning Section -->
         <div id="lowStockAlertsContainer"></div>
 
-        <!-- Stats Cards (Clickable) -->
+        <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card clickable" onclick="window.location.href='donors.html'">
-                <div class="stat-icon">👤</div>
+                <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
                 <div class="stat-info">
                     <h3 id="totalDonors">0</h3>
-                    <p>Total Donors (All Hospitals)</p>
+                    <p>စုစုပေါင်း အလှူရှင် (ဆေးရုံအားလုံး)</p>
                 </div>
             </div>
             <div class="stat-card clickable" onclick="window.location.href='inventory.html'">
-                <div class="stat-icon">📦</div>
+                <div class="stat-icon"><i class="fas fa-box-open"></i></div>
                 <div class="stat-info">
                     <h3 id="totalInventory">0</h3>
-                    <p>Total Inventory (All Hospitals)</p>
+                    <p>စုစုပေါင်း လက်ကျန် (ဆေးရုံအားလုံး)</p>
                 </div>
             </div>
             <div class="stat-card clickable" onclick="window.location.href='requests.html'">
-                <div class="stat-icon">📋</div>
+                <div class="stat-icon"><i class="fas fa-clipboard-list"></i></div>
                 <div class="stat-info">
                     <h3 id="totalRequests">0</h3>
-                    <p>Total Requests (All Hospitals)</p>
+                    <p>စုစုပေါင်း တောင်းခံမှု (ဆေးရုံအားလုံး)</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🏥</div>
+                <div class="stat-icon"><i class="fas fa-hospital"></i></div>
                 <div class="stat-info">
                     <h3 id="totalHospitals">0</h3>
-                    <p>Total Hospitals</p>
+                    <p>စုစုပေါင်း ဆေးရုံ</p>
                 </div>
             </div>
         </div>
@@ -88,21 +82,21 @@
         <!-- Hospitals Overview -->
         <div class="card">
             <div class="card-header">
-                <h3>🏥 Hospitals Overview</h3>
+                <h3><i class="fas fa-building" style="margin-right: 8px; color: var(--medical-cyan);"></i> ဆေးရုံများ ခြုံငုံသုံးသပ်ချက်</h3>
             </div>
             <div class="card-body">
                 <table id="hospitalsTable">
                     <thead>
                         <tr>
-                            <th>Hospital Name</th>
-                            <th>Location</th>
-                            <th>Donors</th>
-                            <th>Inventory Items</th>
-                            <th>Requests</th>
+                            <th>ဆေးရုံအမည်</th>
+                            <th>တည်နေရာ</th>
+                            <th>အလှူရှင်</th>
+                            <th>လက်ကျန်ပစ္စည်း</th>
+                            <th>တောင်းခံမှု</th>
                         </tr>
                     </thead>
                     <tbody id="hospitalsBody">
-                        <tr><td colspan="5">Loading...</td></tr>
+                        <tr><td colspan="5" class="text-muted" style="color: var(--text-muted);">ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -112,20 +106,20 @@
         <div class="recent-section">
             <div class="card">
                 <div class="card-header">
-                    <h3>🔄 Recent Sync Activity</h3>
-                    <a href="sync_logs.html">View All →</a>
+                    <h3><i class="fas fa-sync-alt" style="margin-right: 8px; color: var(--medical-cyan);"></i> နောက်ဆုံး ချိတ်ဆက်မှု လုပ်ဆောင်ချက်များ</h3>
+                    <a href="sync_logs.html">အားလုံး ကြည့်ရန် <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="card-body">
                     <table id="recentSyncTable">
                         <thead>
                             <tr>
-                                <th>Timestamp</th>
-                                <th>Hospital</th>
-                                <th>Status</th>
+                                <th>အချိန်တံဆိပ်</th>
+                                <th>ဆေးရုံ</th>
+                                <th>အခြေအနေ</th>
                             </tr>
                         </thead>
                         <tbody id="recentSyncBody">
-                            <tr><td colspan="3">Loading...</td></tr>
+                            <tr><td colspan="3" class="text-muted" style="color: var(--text-muted);">ဒေတာ ရယူနေသည်...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -133,8 +127,22 @@
         </div>
     </div>
 
+    <!-- JS Scripts (မူရင်းအတိုင်း) -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
+
+    <!-- 🟢 UI Only Script: User Name ကို "User" ပြောင်းပြီး Badge နှင့် မထပ်အောင် ပြင်ဆင်ခြင်း -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) {
+                    // 🟢 Hospital A ကဲ့သို့ "User" ဟု ပြောင်းလဲပြီး Role Badge နှင့် ရှင်းရှင်းလင်းလင်းကွဲအောင် လုပ်လိုက်ပါတယ်။
+                    userNameEl.textContent = 'User'; 
+                }
+            }, 100);
+        });
+    </script>
 </body>
 </html>

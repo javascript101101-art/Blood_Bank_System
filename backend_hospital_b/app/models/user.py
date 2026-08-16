@@ -16,5 +16,9 @@ class User(BaseModel):
     # 🆕 Self-Registration အတွက်
     is_approved = Column(Boolean, default=False)  # Admin က Approve လုပ်မှသာ Login ဝင်လို့ရမယ်
 
+    # Relationships
     hospital = relationship("Hospital", back_populates="users")
     requests = relationship("BloodRequest", back_populates="requester")
+    
+    # 🟢 Clinic Profile နှင့် One-to-One ချိတ်ဆက်ခြင်း (နည်းလမ်း ၂ အတွက် မပါမဖြစ်)
+    clinic_profile = relationship("ClinicProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")

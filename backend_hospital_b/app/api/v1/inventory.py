@@ -6,7 +6,7 @@ from app.database import get_db
 from app.middleware.auth_middleware import get_current_active_user, role_required
 from app.models.user import User
 from app.services.inventory_service import InventoryService
-from app.schemas.inventory_schema import InventoryCreate, InventoryUpdate, InventoryResponse
+from app.schemas.inventory_schema import InventoryCreate, InventoryUpdate, InventoryResponse, InventorySplitRequest
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
 
@@ -27,6 +27,51 @@ def get_inventories(
     """သွေးတိုက်စာရင်းအားလုံး ကြည့်ရန်"""
     return InventoryService.get_inventories(db, current_user.hospital_id)
 
+# ============================================
+# Low Stock Warnings (Local Hospital)
+# ============================================
+@router.get("/low-stock-warnings")
+def get_local_low_stock_warnings(
+    threshold: float = 500.0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Local Hospital ၏ Inventory တွင် သတ်မှတ်ထားသော ပမာဏအောက် ရောက်နေသော သွေးများကို သတိပေးရန်"""
+    warnings = InventoryService.get_low_stock_warnings(db, current_user.hospital_id, threshold)
+    return {"alerts": warnings}
+
+# ============================================
+# 🆕 ဆေးခန်း (Clinic) များအတွက် Available Inventory 
+# ============================================
+@router.get("/available", response_model=List[InventoryResponse])
+def get_available_inventory(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """ဆေးခန်းများမှ Request တင်ရန် ရရှိနိုင်သော (Available) သွေးများကိုသာ ပြသရန်"""
+    # အရင်ဆုံး Inventory အားလုံးကို ယူပါမည်
+    inventories = InventoryService.get_inventories(db, current_user.hospital_id)
+    # Status 'Available' ဖြစ်နေသော သွေးများကိုသာ စစ်ထုတ် (Filter) ပြီး ပြန်ပို့ပေးပါမည်
+    available_only = [inv for inv in inventories if inv.status == "Available"]
+    return available_only
+
+# ============================================
+# 🆕 Component Splitting Endpoint (သွေးခွဲထုတ်ရန်)
+# ============================================
+@router.post("/{inv_id}/split", response_model=List[InventoryResponse])
+def split_inventory(
+    inv_id: UUID,
+    split_data: InventorySplitRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Hospital_Admin"))
+):
+    """Quarantined သွေးအိတ်စိမ်းကို သွေးအစိတ်အပိုင်းများအဖြစ် ခွဲထုတ်ရန်"""
+    result = InventoryService.split_inventory(db, inv_id, current_user.hospital_id, split_data)
+    if not result:
+        raise HTTPException(status_code=400, detail="သွေးခွဲထုတ်ခြင်း မအောင်မြင်ပါ။ (သွေးအိတ်သည် Quarantined အခြေအနေဖြစ်ရန် လိုအပ်သည်)")
+    return result
+
+# ⚠️ သတိပြုရန် - `/{inv_id}` သည် `/available` ၏ အောက်တွင်သာ ရှိရပါမည်။
 @router.get("/{inv_id}", response_model=InventoryResponse)
 def get_inventory(
     inv_id: UUID,

@@ -1,0 +1,20 @@
+/* ============================================================
+   GLOBAL ADMIN DASHBOARD SPECIFIC STYLES
+   ============================================================ */
+
+/* ===== Dashboard Stats Icon Colors (Dark Theme) ===== */
+.stat-card:nth-child(1) .stat-icon { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.stat-card:nth-child(2) .stat-icon { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+.stat-card:nth-child(3) .stat-icon { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+.stat-card:nth-child(4) .stat-icon { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+
+/* ===== Dashboard Cards Hover Enhancements ===== */
+.card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+.stat-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+.card-header a:hover { color: #ffffff; text-decoration: underline; }
+
+/* ===== Low Stock Warning Specifics ===== */
+#lowStockAlertsContainer .alert-warning {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+}

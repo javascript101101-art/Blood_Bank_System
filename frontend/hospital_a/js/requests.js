@@ -1,5 +1,5 @@
 // ============================================
-// Blood Request Management (FIXED FOR EXTERNAL CLINIC)
+// Blood Request Management (FIXED FOR EXTERNAL CLINIC & COMPONENTS)
 // ============================================
 let editingRequestId = null;
 let currentUserRole = null;
@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
     currentUserRole = user?.role || 'Hospital_Admin';
 
     // ★★★ Clinic အတွက် Status Dropdown ကို ဖျောက်ပါ ★★★
-    // 🟢 ဒီနေရာမှာ Clinic ဟု ပြောင်းထားပါသည်
     const isClinic = currentUserRole === 'Clinic';
     const statusGroup = document.getElementById('statusGroup');
     if (statusGroup && isClinic) {
@@ -51,7 +50,6 @@ async function loadClinicProfile() {
         if (result && result.status === 200 && result.data) {
             const data = result.data;
             
-            // HTML ထဲက Input ID များကို တိုက်ဆိုင်စစ်ဆေးပြီး Data ဖြည့်ပါမည်
             const fields = [
                 { id: 'reqClinicName', value: data.clinic_name },
                 { id: 'reqLicense', value: data.license },
@@ -64,8 +62,8 @@ async function loadClinicProfile() {
                 const inputEl = document.getElementById(field.id);
                 if (inputEl) {
                     inputEl.value = field.value;
-                    inputEl.readOnly = true; // 🟢 ပြင်၍မရအောင် ပိတ်ထားမည်
-                    inputEl.style.backgroundColor = "#e9ecef"; // 🟢 မီးခိုးရောင် နောက်ခံလေးပြမည်
+                    inputEl.readOnly = true;
+                    inputEl.style.backgroundColor = "#e9ecef";
                 }
             });
         }
@@ -81,14 +79,14 @@ async function loadRequests() {
     const tbody = document.getElementById('requestsBody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Loading...</td></tr>';
 
     try {
         const result = await apiRequest('/requests/', { method: 'GET' });
         
         if (result && result.status === 200 && result.data) {
             if (result.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8">No blood requests found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No blood requests found.</td></tr>';
                 return;
             }
             
@@ -97,7 +95,6 @@ async function loadRequests() {
                 let editDeleteButtons = '';
 
                 const isAdmin = currentUserRole === 'Hospital_Admin';
-                // 🟢 ဒီနေရာမှာ Clinic ဟု ပြောင်းထားပါသည်
                 const isClinic = currentUserRole === 'Clinic';
 
                 if (isAdmin) {
@@ -130,9 +127,13 @@ async function loadRequests() {
                     editDeleteButtons = '';
                 }
 
+                // 🟢 သွေးအစိတ်အပိုင်း (Blood Component) ကို ရှင်းလင်းစွာ ပြသရန်
+                const componentDisplay = (req.blood_component || 'Red_Cells').replace('_', ' ').toUpperCase();
+
                 return `
                     <tr>
                         <td><strong>${req.clinic_name}</strong><br><small>${req.contact_phone}</small></td>
+                        <td><span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${componentDisplay}</span></td>
                         <td><span class="badge">${req.blood_group}</span></td>
                         <td>${req.required_date || '-'}</td>
                         <td>${req.quantity_units}</td>
@@ -148,7 +149,7 @@ async function loadRequests() {
             }).join('');
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="8">Error loading requests.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Error loading requests.</td></tr>';
         console.error('Error loading requests:', error);
     }
 }
@@ -211,6 +212,10 @@ function openRequestModal(requestData = null) {
         document.getElementById('reqContactEmail').value = requestData.contact_email;
         document.getElementById('reqClinicAddress').value = requestData.clinic_address;
         
+        // 🟢 သွေးအစိတ်အပိုင်း (Blood Component) ထည့်သွင်းခြင်း
+        const compSelect = document.getElementById('reqBloodComponent');
+        if (compSelect) compSelect.value = requestData.blood_component || 'Red_Cells';
+
         document.getElementById('reqBloodGroup').value = requestData.blood_group;
         document.getElementById('reqQuantity').value = requestData.quantity_units;
         document.getElementById('reqUrgency').value = requestData.urgency;
@@ -224,7 +229,6 @@ function openRequestModal(requestData = null) {
         document.getElementById('reqStatus').value = 'Pending';
         document.getElementById('reqUrgency').value = 'Normal Request';
         
-        // 🟢 ဒီနေရာမှာ Clinic ဟု ပြောင်းထားပါသည်
         const isClinic = currentUserRole === 'Clinic';
         if (isClinic) {
             loadClinicProfile();
@@ -278,9 +282,9 @@ async function handleRequestSubmit(e) {
     const errorEl = document.getElementById('requestFormError');
     errorEl.style.display = 'none';
 
-    // 🟢 Payload ဖွဲ့စည်းခြင်း (Backend Schema နှင့် ကိုက်ညီအောင် ပြင်ဆင်ထားသည်)
-    // အသစ်ဖန်တီးရာတွင် Clinic Data များ မလိုအပ်ပါ။ Backend က Auto ယူပါလိမ့်မည်။
+    // 🟢 🆕 Payload ထဲတွင် blood_component ကို ထည့်သွင်းပေးခြင်း
     let requestData = {
+        blood_component: document.getElementById('reqBloodComponent').value,
         blood_group: document.getElementById('reqBloodGroup').value,
         quantity_units: parseInt(document.getElementById('reqQuantity').value),
         urgency: document.getElementById('reqUrgency').value,
@@ -288,7 +292,6 @@ async function handleRequestSubmit(e) {
         patient_condition: document.getElementById('reqPatientCondition').value
     };
 
-    // 🟢 Update လုပ်ခြင်း (Admin) ဖြစ်ပါက အချက်အလက်အပြည့်အစုံကို ထည့်ပေးရပါမည်
     if (editingRequestId) {
         requestData = {
             ...requestData,
@@ -311,7 +314,7 @@ async function handleRequestSubmit(e) {
         } else {
             result = await apiRequest('/requests/', {
                 method: 'POST',
-                body: JSON.stringify(requestData) // 🟢 သွေးအမျိုးအစား၊ ပမာဏ စသည်တို့ကိုသာ ပို့ပါမည်
+                body: JSON.stringify(requestData)
             });
         }
 

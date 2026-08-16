@@ -4,81 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital A - Register</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Form အသစ်အတွက် ပိုမိုသပ်ရပ်စေရန် အနည်းငယ် ဖြည့်စွက်ထားပါသည် */
-        .section-title { margin: 20px 0 10px 0; color: #444; font-size: 1.1em; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-    </style>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Background Style (index.html မှ) -->
+    <link rel="stylesheet" href="css/login.css">
+    <!-- Form Style (ပြင်ပြီးသော) -->
+    <link rel="stylesheet" href="css/register.css">
 </head>
-<body>
+<body class="bg-animated">
+    
     <div class="register-container">
-        <div class="register-box" style="max-width: 500px;"> <!-- Form ကြီးသွားသဖြင့် Size ချဲ့ပေးထားသည် -->
+        <div class="register-box">
             <div class="register-header">
-                <h1>🩸 Hospital A</h1>
-                <!-- 🟢 ခေါင်းစဉ်ကို Clinic အတွက် သီးသန့် ပြောင်းထားပါသည် -->
-                <p>Create Clinic Account</p>
+                <h1><i class="fas fa-tint" style="color: #dc2626;"></i> Hospital A</h1>
+                <p><i class="fas fa-user-plus" style="margin-right: 4px;"></i> Create Clinic Account</p>
             </div>
+            
             <form id="registerForm">
                 
-                <h3 class="section-title">👤 User Information</h3>
-                
-                <div class="form-group">
-                    <label for="username">Username *</label>
-                    <input type="text" id="username" placeholder="Choose a username" required>
-                </div>
-                <div class="form-group">
-                    <label for="full_name">Full Name *</label>
-                    <input type="text" id="full_name" placeholder="Enter your full name" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password *</label>
-                    <input type="password" id="password" placeholder="Enter password (min 6 chars)" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirm_password">Confirm Password *</label>
-                    <input type="password" id="confirm_password" placeholder="Confirm password" required>
-                </div>
-                <div class="form-group">
-                    <label for="role">Role *</label>
-                    <!-- 🟢 Role နေရာတွင် Clinic တစ်ခုတည်းသာ ထားရှိပါသည် -->
-                    <select id="role" required>
-                        <option value="Clinic">External Clinic</option>
-                    </select>
+                <div class="register-sections-wrapper">
+                    
+                    <!-- LEFT -->
+                    <div class="register-section">
+                        <h4 class="section-title"><i class="fas fa-user"></i> User Information</h4>
+                        
+                        <div class="form-group">
+                            <label for="username">Username <span class="required">*</span></label>
+                            <input type="text" id="username" placeholder="Choose a username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="full_name">Full Name <span class="required">*</span></label>
+                            <input type="text" id="full_name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password <span class="required">*</span></label>
+                            <input type="password" id="password" placeholder="min 6 chars" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+                            <input type="password" id="confirm_password" placeholder="Confirm password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role <span class="required">*</span></label>
+                            <select id="role" required>
+                                <option value="Clinic">External Clinic</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT -->
+                    <div class="register-section">
+                        <h4 class="section-title"><i class="fas fa-hospital"></i> Clinic / Hospital Information</h4>
+                        
+                        <div class="form-group">
+                            <label for="regClinicName">Clinic Name <span class="required">*</span></label>
+                            <input type="text" id="regClinicName" required placeholder="e.g. City Health Clinic">
+                        </div>
+                        <div class="form-group">
+                            <label for="regLicense">License <span class="required">*</span></label>
+                            <input type="text" id="regLicense" required placeholder="e.g. REG-12345">
+                        </div>
+                        <div class="form-group">
+                            <label for="regContactPhone">Contact Phone <span class="required">*</span></label>
+                            <input type="text" id="regContactPhone" required placeholder="09xxxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="regContactEmail">Contact Email <span class="required">*</span></label>
+                            <input type="email" id="regContactEmail" required placeholder="clinic@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="regClinicAddress">Clinic Address <span class="required">*</span></label>
+                            <textarea id="regClinicAddress" rows="2" required placeholder="Enter full address"></textarea>
+                        </div>
+                    </div>
+                    
                 </div>
 
-                <!-- 🆕 အသစ် ထပ်ပေါင်းထည့်ထားသော Clinic Information နေရာ -->
-                <h3 class="section-title">🏥 Clinic / Hospital Information</h3>
+                <button type="submit" class="btn-block"><i class="fas fa-user-check"></i> Register</button>
                 
-                <div class="form-group">
-                    <label for="regClinicName">Clinic Name *</label>
-                    <input type="text" id="regClinicName" required placeholder="e.g. City Health Clinic">
-                </div>
-                <div class="form-group">
-                    <label for="regLicense">License *</label>
-                    <input type="text" id="regLicense" required placeholder="e.g. REG-12345">
-                </div>
-                <div class="form-group">
-                    <label for="regContactPhone">Contact Phone *</label>
-                    <input type="text" id="regContactPhone" required placeholder="09xxxxxxxxx">
-                </div>
-                <div class="form-group">
-                    <label for="regContactEmail">Contact Email *</label>
-                    <input type="email" id="regContactEmail" required placeholder="clinic@example.com">
-                </div>
-                <div class="form-group">
-                    <label for="regClinicAddress">Clinic Address *</label>
-                    <textarea id="regClinicAddress" rows="2" required placeholder="Enter full address"></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 20px;">Register</button>
-                <div id="registerError" class="error-message" style="display:none; color:red; margin-top:10px;"></div>
-                <div id="registerSuccess" class="success-message" style="display:none; color:green; margin-top:10px;"></div>
+                <div id="registerError" class="error-message" style="display:none;"></div>
+                <div id="registerSuccess" class="success-message" style="display:none;"></div>
+                
             </form>
-            <p style="text-align:center; margin-top:16px;">
+            
+            <!-- 🟢 ဒီနေရာကို သေချာမြင်ရအောင် CSS နဲ့ ပြန်ပြင်ထားပါတယ် -->
+            <div class="footer-link">
                 Already have an account? <a href="index.html">Login</a>
-            </p>
+            </div>
         </div>
     </div>
+
+    <!-- JS Scripts -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
 </body>

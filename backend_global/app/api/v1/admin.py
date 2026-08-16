@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from app.database import get_db
 from app.middleware.auth_middleware import get_current_active_user, role_required
 from app.models.user import User
-from app.models.donor import Donor          # 🆕 Import Donor
-from app.models.inventory import Inventory  # 🆕 Import Inventory
+from app.models.donor import Donor          
+from app.models.inventory import Inventory  
+from app.models.blood_request import BloodRequest # 🟢 Import BloodRequest (အသစ်)
 from app.services.admin_service import AdminService
 from app.schemas.admin_schema import GlobalStats, SyncLogEntry
+from app.schemas.request_schema import BloodRequestResponse # 🟢 Import Request Schema (အသစ်)
+from uuid import UUID 
+from app.schemas.inventory_schema import InventoryResponse 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -35,7 +39,7 @@ def get_sync_logs(
     return AdminService.get_sync_logs(db, limit)
 
 # ============================================
-# 🆕 3. Get All Donors (All Hospitals)
+# 3. Get All Donors (All Hospitals)
 # ============================================
 @router.get("/donors")
 def get_all_donors(
@@ -47,7 +51,7 @@ def get_all_donors(
     return donors
 
 # ============================================
-# 🆕 4. Get All Inventory (All Hospitals)
+# 4. Get All Inventory (All Hospitals)
 # ============================================
 @router.get("/inventory")
 def get_all_inventory(
@@ -59,7 +63,7 @@ def get_all_inventory(
     return inventory
 
 # ============================================
-# 🆕 5. Get Low Stock Warnings (Global)
+# 5. Get Low Stock Warnings (Global)
 # ============================================
 @router.get("/low-stock-warnings")
 def get_low_stock_warnings(
@@ -70,3 +74,40 @@ def get_low_stock_warnings(
     """Global Inventory တွင် သတ်မှတ်ထားသော ပမာဏအောက် ရောက်နေသော သွေးအမျိုးအစားများကို ပြန်ပေးပါ"""
     warnings = AdminService.get_low_stock_warnings(db, threshold)
     return {"alerts": warnings}
+
+# ============================================
+# 6. Get All Hospitals (For ID to Name mapping in UI)
+# ============================================
+@router.get("/hospitals")
+def get_all_hospitals(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Global_Admin"))
+):
+    """ဆေးရုံအားလုံး၏ ID နှင့် အမည်စာရင်းကို ပြန်ပေးပါ (UI မှ UUID များကို နာမည်ပြောင်းရန်)"""
+    from app.models.hospital import Hospital
+    hospitals = db.query(Hospital).all()
+    return hospitals
+
+# ============================================
+# 7. Get Specific Donor History (Global Admin)
+# ============================================
+@router.get("/donors/{donor_id}/history", response_model=List[InventoryResponse])
+def get_global_donor_history(
+    donor_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Global_Admin"))
+):
+    """Global Admin အတွက် အလှူရှင်တစ်ဦးချင်းစီ၏ သွေးလှူဒါန်းမှု မှတ်တမ်း (Traceability) ကို ကြည့်ရန်"""
+    return AdminService.get_donor_history(db, donor_id)
+
+# ============================================
+# 🟢 8. Get All Blood Requests (Global Admin အတွက် အသစ်)
+# ============================================
+@router.get("/requests", response_model=List[BloodRequestResponse])
+def get_all_blood_requests(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Global_Admin"))
+):
+    """ဆေးရုံအားလုံးမှ သွေးတောင်းခံမှု အားလုံးကို ဆွဲထုတ်ရန်"""
+    requests = db.query(BloodRequest).order_by(BloodRequest.requested_at.desc()).all()
+    return requests

@@ -1,0 +1,118 @@
+/* =========================================
+   LOGIN PAGE UI CSS - Optimized & Fast Blood Flow
+   ========================================= */
+
+/* မူရင်း Font များ */
+body {
+    font-family: 'Myanmar Text', 'Padauk', 'Tharlon', sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+}
+
+/* ===== FAST BACKGROUND & VEIN NETWORK ===== */
+/* SVG အစား Background ကို ရွေ့လျားခြင်းဖြင့် "သွေးကြောစီးဆင်းနေသည့်" အာရုံကို ဖန်တီးထားပါတယ်။ */
+.bg-animated {
+    background-image: 
+        /* သွေးကြောများ (SVG) - နောက်ခံနေရာရွေ့လျားမှုဖြင့် စီးဆင်းနေအောင် လုပ်ထားပါတယ် */
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'%3E%3Cstyle%3E.v%7Bfill:none%3Bstroke:%23b91c1c%3Bstroke-width:4%3Bstroke-linecap:round%3Bopacity:0.6%3B%7D.v2%7Bstroke:%23dc2626%3Bstroke-width:2%3Bopacity:0.5%3B%7D.v3%7Bstroke:%23ef4444%3Bstroke-width:1%3Bopacity:0.4%3B%7D%3C/style%3E%3Cpath class='v' d='M-100,100 C200,400 400,100 600,300 C800,500 1000,200 1200,400'/%3E%3Cpath class='v v2' d='M1200,200 C800,0 600,300 400,100 C200,-100 -100,200 -100,400'/%3E%3Cpath class='v v3' d='M600,300 C700,450 800,450 900,600'/%3E%3Cpath class='v v3' d='M400,100 C300,250 200,200 100,300'/%3E%3Cpath class='v v3' d='M400,100 C350,50 250,0 100,50'/%3E%3Cpath class='v v3' d='M600,300 C500,250 450,350 350,250'/%3E%3Cpath class='v v3' d='M800,500 C750,600 850,650 950,500'/%3E%3C/svg%3E"),
+        /* သွေးရည်ကြည် နောက်ခံအရောင် */
+        radial-gradient(ellipse at center, #16080b 0%, #2d1215 50%, #0a0304 100%);
+    
+    background-size: 140% 140%, 100% 100%;
+    background-position: 0% 0%, 0% 0%;
+    /* SVG နောက်ခံကို ဖြည်းဖြည်းချင်းရွေ့ပြီး သွေးစီးဆင်းနေသလိုမျိုး ဖန်တီးပါတယ် */
+    animation: plasmaFlow 30s linear infinite, moveVeins 30s linear infinite;
+}
+@keyframes plasmaFlow {
+    0% { background-position: 0% 50%, 0% 0%; }
+    50% { background-position: 100% 50%, 100% 100%; }
+    100% { background-position: 0% 50%, 0% 0%; }
+}
+@keyframes moveVeins {
+    0% { background-size: 140% 140%, 100% 100%; background-position: -5% -5%, 0% 0%; }
+    50% { background-size: 150% 150%, 100% 100%; background-position: 105% 105%, 0% 0%; }
+    100% { background-size: 140% 140%, 100% 100%; background-position: -5% -5%, 0% 0%; }
+}
+
+/* ===== FLOATING BLOOD CELLS (သွေးနီဥကြီးများ - ပိုမိုမြန်ဆန်အောင် ပြင်ထားပါတယ်) ===== */
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.45; /* Overdraw နည်းအောင် လျှော့ချထားပါတယ် */
+    animation: cellFloat 18s infinite alternate ease-in-out;
+    will-change: transform; /* Browser အား Performance ကြိုတင်ပြင်ဆင်ခိုင်းခြင်း */
+}
+.blob-1 {
+    background: radial-gradient(circle at 35% 35%, rgba(225, 29, 72, 0.3), rgba(185, 28, 28, 0.7) 40%, transparent 80%);
+    width: 300px; height: 300px;
+    top: -15%; left: -10%;
+    animation-delay: 0s;
+}
+.blob-2 {
+    background: radial-gradient(circle at 65% 65%, rgba(244, 63, 94, 0.2), rgba(220, 38, 38, 0.6) 50%, transparent 80%);
+    width: 350px; height: 350px;
+    bottom: -25%; right: -15%;
+    animation-delay: -6s;
+}
+
+@keyframes cellFloat {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    33% { transform: translate(40px, -20px) scale(1.05) rotate(10deg); }
+    66% { transform: translate(-20px, 50px) scale(0.95) rotate(-5deg); }
+    100% { transform: translate(20px, -30px) scale(1.02) rotate(5deg); }
+}
+
+/* ===== MICROSCOPE MOLECULES (သွေးအဏုမြူအမှုန်များ - ပိုမိုပေါ့ပါးအောင် ရိုးရှင်းပြင်ထား) ===== */
+body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+        radial-gradient(5px 5px at 15% 25%, rgba(244, 63, 94, 0.7), transparent),
+        radial-gradient(4px 4px at 35% 65%, rgba(225, 29, 72, 0.6), transparent),
+        radial-gradient(6px 6px at 55% 15%, rgba(244, 63, 94, 0.5), transparent),
+        radial-gradient(5px 5px at 75% 85%, rgba(185, 28, 28, 0.7), transparent),
+        radial-gradient(4px 4px at 95% 45%, rgba(225, 29, 72, 0.6), transparent),
+        radial-gradient(7px 7px at 20% 95%, rgba(244, 63, 94, 0.7), transparent);
+    background-size: 180px 180px;
+    animation: driftMolecules 30s linear infinite;
+    will-change: transform, background-position;
+}
+
+@keyframes driftMolecules {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-60px, 80px) rotate(360deg); }
+}
+
+/* ===== LOGIN CARD & BUTTON ===== */
+.card-container {
+    background: rgba(255, 255, 255, 0.96); 
+    backdrop-filter: blur(6px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9); 
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shine-btn {
+    position: relative;
+    overflow: hidden;
+    background: #e11d48; 
+    box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4);
+}
+.shine-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(transparent, rgba(255,255,255,0.2), transparent);
+    transform: rotate(45deg) translateX(-100%);
+    transition: 0.6s;
+}
+.shine-btn:hover::after {
+    transform: rotate(45deg) translateX(100%);
+}

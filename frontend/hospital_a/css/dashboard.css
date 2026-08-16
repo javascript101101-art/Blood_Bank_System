@@ -1,0 +1,63 @@
+/* ============================================================
+   DASHBOARD SPECIFIC UI (Red Warnings on Light BG)
+   ============================================================ */
+
+/* ===== Dashboard Stats Colors ===== */
+.stat-card:nth-child(1) .stat-icon { background: #dbeafe; color: #2563eb; }
+.stat-card:nth-child(2) .stat-icon { background: #ccfbf1; color: #0d9488; }
+.stat-card:nth-child(3) .stat-icon { background: #ede9fe; color: #7c3aed; }
+.stat-card:nth-child(4) .stat-icon { background: #fef3c7; color: #d97706; }
+
+/* ===== Warning Section (Alerts) - RED TEXT ON WHITE BG ===== */
+.warning-alert-item {
+    display: flex; 
+    align-items: flex-start; 
+    gap: 10px;
+    padding: 12px 16px; 
+    margin-bottom: 8px; 
+    font-size: 14px; 
+    
+    /* 🟢 စာသားကို အနီရောင်၊ နောက်ခံကို အဖြူရောင် */
+    color: #dc2626 !important; 
+    font-weight: 600; 
+    
+    background: #ffffff; 
+    border: 1px solid #fecaca;
+    border-left: 5px solid #dc2626; 
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+}
+.warning-alert-item:last-child { margin-bottom: 0; }
+.warning-alert-item:hover {
+    background: #fef2f2; 
+    transform: translateX(4px);
+    border-left-color: #991b1b;
+}
+.warning-alert-item i { 
+    color: #dc2626; 
+    margin-top: 2px; 
+    font-size: 18px; 
+}
+
+/* ===== Sync Bar ===== */
+.sync-section { margin-bottom: 16px; }
+.sync-bar-container {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #ffffff; border: 1px solid var(--border-color);
+    border-left: 4px solid var(--medical-cyan); padding: 10px 16px; border-radius: var(--radius-md);
+    flex-wrap: wrap; gap: 8px;
+}
+.sync-left-wrapper { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.sync-time { color: var(--text-muted); margin-left: 6px; font-size: 12px; }
+
+/* ===== Blood Group Badge ===== */
+.badge-blood-group {
+    background-color: var(--blood-red); color: #ffffff;
+    padding: 2px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; display: inline-block;
+}
+
+/* ===== Empty State ===== */
+.empty-state { padding: 20px 0; text-align: center; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+.empty-state i { margin-right: 6px; font-size: 14px; }

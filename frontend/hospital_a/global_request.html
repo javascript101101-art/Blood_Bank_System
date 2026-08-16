@@ -3,42 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Global Blood Request</title>
+    <title>ဆေးရုံ A - ကမ္ဘာ့သွေးတောင်းခံမှု စီမံခန့်ခွဲမှု</title>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Font Load -->
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Global CSS -->
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- 🟢 GLOBAL REQUEST FORM STYLES (UI သက်သက် လှပအောင် ပြင်ထားသော CSS) -->
+    <style>
+        .global-form-modern {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .global-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 🟢 ကော်လံ (၃) ခု ဖြစ်အောင် ပြင်လိုက်ပါသည် */
+            gap: 16px;
+        }
+        .global-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .global-form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .global-form-group .required {
+            color: #dc2626;
+        }
+        /* Input/Select/Textarea များကို သန့်ရှင်းသော မီးခိုးရောင် ဘောင်အဖြစ် ပြောင်းပါမယ် */
+        .global-form-group input,
+        .global-form-group select,
+        .global-form-group textarea {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            width: 100%;
+        }
+        .global-form-group input:focus,
+        .global-form-group select:focus,
+        .global-form-group textarea:focus {
+            outline: none;
+            border-color: var(--hospital-blue);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(15, 76, 117, 0.15);
+        }
+        .global-form-group textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .global-form-full {
+            grid-column: 1 / -1;
+        }
+
+        /* အောက်ဆုံး ပို့မည့်ခလုတ်ကို လှပအောင် */
+        .global-submit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 50px; /* လုံးဝိုင်းတဲ့ ပုံစံ */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Responsive အတွက် */
+        @media (max-width: 768px) {
+            .global-form-row {
+                grid-template-columns: 1fr; /* 🟢 ဖုန်းနဲ့ကြည့်လျှင် တစ်ကြောင်းတည်း ပေါ်မည် */
+            }
+        }
+    </style>
 </head>
-<body>
+<body class="bg-animated">
+    
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🩸 Hospital A</h2>
+            <h2><i class="fas fa-tint" style="color: #dc2626;"></i> ဆေးရုံ A</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="active">📊 Dashboard</a>
-            <!-- 🟢 Staff များအတွက် ဖြုတ်နိုင်ရန် ID ထည့်ထားပါသည် -->
-            <a href="donors.html" id="navDonors">👤 Donors</a>
-            <a href="inventory.html">📦 Inventory</a>
-            <a href="requests.html">📋 Requests</a>
-            <a href="global_request.html">🌐 Global Request</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-home"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html" id="navDonors"><i class="fas fa-users"></i> သွေးလှူရှင်များ</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်</a>
+            <a href="requests.html"><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာများ</a>
+            <a href="global_request.html" class="active" id="navGlobalRequest"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှု</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်မည်</a>
         </nav>
     </div>
 
-
     <div class="main-content">
-        <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>🌐 Request Blood from Global</h1>
-            <!-- 🆕 Global ဆီမှ Data လှမ်းဆွဲမည့် Sync ခလုတ် -->
-            <button onclick="syncFromGlobal()" class="btn btn-secondary" style="background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
-                🔄 Sync / Pull from Global
-            </button>
+        <div class="top-bar">
+            <h1><i class="fas fa-globe" style="color: var(--hospital-blue); margin-right: 8px;"></i> ကမ္ဘာ့ကွန်ရက်မှ သွေးတောင်းခံရန်</h1>
+            <button onclick="syncFromGlobal()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> ဂလိုဘယ်မှ ဒေတာဆွဲမည်</button>
         </div>
 
+        <!-- Global Request Form -->
         <div class="card">
             <div class="card-body">
-                <form id="globalRequestForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="reqBloodGroup">Blood Group *</label>
+                <form id="globalRequestForm" class="global-form-modern">
+                    
+                    <!-- 🟢 ပထမအကြောင်းတွင် သွေးအုပ်စု၊ Rh နဲ့ Component ကို (၃) ကွက်ခွဲပြပါမည် -->
+                    <div class="global-form-row">
+                        <div class="global-form-group">
+                            <label for="reqBloodGroup">သွေးအုပ်စု <span class="required">*</span></label>
                             <select id="reqBloodGroup" required>
                                 <option value="A">A</option>
                                 <option value="B">B</option>
@@ -46,63 +126,83 @@
                                 <option value="O">O</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="reqRhFactor">Rh Factor *</label>
+                        <div class="global-form-group">
+                            <label for="reqRhFactor">Rh Factor <span class="required">*</span></label>
                             <select id="reqRhFactor" required>
                                 <option value="Positive">Positive</option>
                                 <option value="Negative">Negative</option>
                             </select>
                         </div>
+                        <!-- 🆕 Component အကွက် အသစ် -->
+                        <div class="global-form-group">
+                            <label for="reqBloodComponent">အမျိုးအစား (Component) <span class="required">*</span></label>
+                            <select id="reqBloodComponent" required>
+                                <option value="Whole_Blood">Whole Blood (သွေးစိမ်း)</option>
+                                <option value="Red_Cells">Red Cells (သွေးနီဥ)</option>
+                                <option value="Plasma">Plasma (ပလာစမာ)</option>
+                                <option value="Platelets">Platelets (သွေးဥမွှား)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="reqQuantity">Quantity Required (ml) *</label>
-                        <input type="number" id="reqQuantity" min="1" required placeholder="Enter quantity in ml">
+                    
+                    <!-- ဒုတိယအကြောင်းတွင် ပမာဏ နှင့် အရေးကြီးအဆင့် -->
+                    <div class="global-form-row" style="grid-template-columns: 1fr 1fr;"> 
+                        <div class="global-form-group">
+                            <label for="reqQuantity">လိုအပ်သည့် ပမာဏ (ml) <span class="required">*</span></label>
+                            <input type="number" id="reqQuantity" min="1" required placeholder="ပမာဏကို ml ဖြင့် ထည့်ပါ">
+                        </div>
+                        <div class="global-form-group">
+                            <label for="reqUrgency">အရေးကြီးအဆင့်</label>
+                            <select id="reqUrgency">
+                                <option value="Normal">သာမန် (Normal)</option>
+                                <option value="Urgent">အရေးပေါ် (Urgent)</option>
+                                <option value="Critical">အရေးကြီးဆုံး (Critical)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="reqUrgency">Urgency</label>
-                        <select id="reqUrgency">
-                            <option value="Normal">Normal</option>
-                            <option value="Urgent">Urgent</option>
-                            <option value="Critical">Critical</option>
-                        </select>
+
+                    <div class="global-form-group global-form-full">
+                        <label for="reqNote">တောင်းဆိုချက် မှတ်စု</label>
+                        <textarea id="reqNote" rows="3" placeholder="ဖြည့်စွက်မှတ်စုများ..."></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="reqNote">Request Note</label>
-                        <textarea id="reqNote" rows="3" placeholder="Additional notes..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Send Request to Global</button>
+
+                    <button type="submit" class="btn btn-primary global-submit-btn">
+                        <i class="fas fa-paper-plane"></i> ဂလိုဘယ်သို့ သွေးတောင်းခံလွှာ ပို့မည်
+                    </button>
                     <div id="formError" class="error-message" style="display:none;"></div>
                 </form>
             </div>
         </div>
 
-        <!-- My Requests -->
-        <div class="card">
+        <!-- My Requests Table -->
+        <div class="card" style="margin-top: 20px;">
             <div class="card-header">
-                <h3>📋 My Global Requests</h3>
+                <h3><i class="fas fa-list-ul" style="color: var(--hospital-blue); margin-right: 8px;"></i> ကျွန်ုပ်၏ ကမ္ဘာ့သွေးတောင်းခံမှုများ</h3>
             </div>
             <div class="card-body">
                 <table id="requestsTable">
                     <thead>
                         <tr>
-                            <th>Blood Group</th>
+                            <th style="padding-left: 0;">သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <th>Quantity</th>
-                            <th>Urgency</th>
-                            <th>Status</th>
-                            <th>Assigned To</th>
-                            <th>Requested At</th>
-                            <th>Actions</th>
+                            <th>အမျိုးအစား</th> <!-- 🆕 Component ပြသရန် ကော်လံအသစ် -->
+                            <th>ပမာဏ</th>
+                            <th>အရေးကြီးအဆင့်</th>
+                            <th>အခြေအနေ</th>
+                            <th>တာဝန်ယူသူ</th>
+                            <th>တောင်းဆိုသည့်အချိန်</th>
+                            <th style="padding-right: 0; text-align: center;">ဆောင်ရွက်ချက်</th>
                         </tr>
                     </thead>
                     <tbody id="requestsBody">
-                        <tr><td colspan="8">Loading...</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted">ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- JS Scripts -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/global_request.js"></script>

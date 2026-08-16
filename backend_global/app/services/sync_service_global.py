@@ -87,10 +87,11 @@ class GlobalSyncService:
                     # ✅ Table အလိုက် Status များကို ခွဲခြားပြင်ဆင်ခြင်း (INSERT)
                     # ==========================================
                     if 'status' in item_data and isinstance(item_data['status'], str):
-                        if item.table_name in ['blood_requests', 'global_blood_requests']:
-                            item_data['status'] = item_data['status'].upper()  # ဥပမာ - PENDING
-                        elif item.table_name == 'inventory':
-                            item_data['status'] = item_data['status'].title()  # ဥပမာ - Available
+                        # 🟢 Global Request ဇယားဆိုလျှင် အကြီးပြောင်းမည်၊ Inventory/Donor ဆိုလျှင် Title (ဥပမာ - Available) ပြောင်းမည်
+                        if model == GlobalBloodRequest:
+                            item_data['status'] = item_data['status'].upper()
+                        else:
+                            item_data['status'] = item_data['status'].title()
 
                     if 'urgency' in item_data and isinstance(item_data['urgency'], str):
                         item_data['urgency'] = item_data['urgency'].title()
@@ -140,9 +141,10 @@ class GlobalSyncService:
                         # ✅ Table အလိုက် Status များကို ခွဲခြားပြင်ဆင်ခြင်း (UPDATE)
                         # ==========================================
                         if key == 'status' and isinstance(value, str):
-                            if item.table_name in ['blood_requests', 'global_blood_requests']:
+                            # 🟢 Global Request ဇယားဆိုလျှင် အကြီးပြောင်းမည်၊ Inventory/Donor ဆိုလျှင် Title (ဥပမာ - Used) ပြောင်းမည်
+                            if model == GlobalBloodRequest:
                                 value = value.upper()
-                            elif item.table_name == 'inventory':
+                            else:
                                 value = value.title()
                         elif key == 'urgency' and isinstance(value, str):
                             value = value.title()

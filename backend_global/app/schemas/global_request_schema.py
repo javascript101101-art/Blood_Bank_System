@@ -4,8 +4,13 @@ from uuid import UUID
 from typing import Optional
 
 class GlobalBloodRequestBase(BaseModel):
-    blood_group: str = Field(..., pattern="^(A|B|AB|O)$")
-    rh_factor: str = Field(..., pattern="^(Positive|Negative)$")
+    # 🟢 "A Positive" ကဲ့သို့ စာလုံးများ လက်ခံနိုင်စေရန် pattern ကို ဖြုတ်ထားပါသည်
+    blood_group: str = Field(...)
+    rh_factor: str = Field(...)
+    
+    # 🆕 Component အသစ် ထည့်သွင်းထားပါသည် (မပါလာပါက Whole_Blood ဟု ယူဆမည်)
+    blood_component: Optional[str] = Field(default="Whole_Blood")
+    
     quantity_ml: int = Field(..., gt=0)
     urgency: Optional[str] = Field("Normal", pattern="^(Critical|Urgent|Normal)$")
     request_note: Optional[str] = None
@@ -14,12 +19,16 @@ class GlobalBloodRequestCreate(GlobalBloodRequestBase):
     pass
 
 class GlobalBloodRequestUpdate(BaseModel):
-    blood_group: Optional[str] = Field(None, pattern="^(A|B|AB|O)$")
-    rh_factor: Optional[str] = Field(None, pattern="^(Positive|Negative)$")
+    blood_group: Optional[str] = Field(None)
+    rh_factor: Optional[str] = Field(None)
+    
+    # 🆕 Component ကို ပြင်ဆင်နိုင်ရန် ထည့်ထားပါသည်
+    blood_component: Optional[str] = Field(None)
+    
     quantity_ml: Optional[int] = Field(None, gt=0)
     urgency: Optional[str] = Field(None, pattern="^(Critical|Urgent|Normal)$")
     
-    # 🟢 ဤနေရာတွင် လိုအပ်သော Status အသစ်များနှင့် အကြီး/အသေးစာလုံးများကိုပါ ထပ်ဖြည့်ထားပါသည်
+    # 🟢 Status များ
     status: Optional[str] = Field(None, pattern="^(Pending|Assigned|Approved|Fulfilled|Supplier_Fulfilled|SUPPLIER_FULFILLED|In-Transit|IN-TRANSIT|Delivered|DELIVERED|Rejected)$")
     
     assigned_hospital_id: Optional[UUID] = None

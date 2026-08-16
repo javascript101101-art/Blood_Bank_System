@@ -1,0 +1,32 @@
+/* ============================================================
+   GLOBAL ADMIN SYNC LOGS PAGE SPECIFIC STYLES
+   ============================================================ */
+
+/* ===== Table Header Override ===== */
+#syncLogsTable th {
+    color: #ffffff;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Refresh Button Styling ===== */
+#refreshBtn {
+    height: 40px;
+    border-radius: 50px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 24px;
+    background: var(--medical-cyan);
+    color: #0a0b1e;
+    border-color: var(--medical-cyan);
+    transition: all 0.2s ease;
+}
+#refreshBtn:hover {
+    background: #0099c9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3);
+}

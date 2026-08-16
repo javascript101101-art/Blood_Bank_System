@@ -3,29 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Admin - Global Blood Requests</title>
+    <title>Global Admin - ကမ္ဘာ့သွေးတောင်းခံမှုများ</title>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Global Admin Base CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Global Requests အတွက် သီးသန့် CSS -->
+    <link rel="stylesheet" href="css/global_requests.css">
 </head>
-<body>
-    <!-- Sidebar -->
+<body class="bg-animated">
+    
+<!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🌐 Global Admin</h2>
+            <h2><i class="fas fa-globe" style="color: var(--medical-cyan);"></i> Central Hub</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html">📊 Dashboard</a>
-            <a href="donors.html">👤 All Donors</a>
-            <a href="inventory.html">📦 All Inventory</a>
-            <a href="global_requests.html" class="active">🌐 Global Requests</a>
-            <a href="sync_logs.html">📋 Sync Logs</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-chart-pie"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html"><i class="fas fa-users"></i> သွေးလှူရှင်အားလုံး</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်အားလုံး</a>
+            <!-- 🟢 requests.html ကို အသစ်ထည့်သွင်းထားပါသည် -->
+            <a href="requests.html" ><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာအားလုံး</a>
+            <a href="global_requests.html"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှုများ</a>
+            <a href="sync_logs.html"><i class="fas fa-history"></i> ချိတ်ဆက်မှုမှတ်တမ်းများ</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်ရန်</a>
         </nav>
     </div>
-
     <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h1>🌐 Global Blood Requests Management</h1>
+            <h1><i class="fas fa-globe-asia" style="color: var(--medical-cyan); margin-right: 10px;"></i> ကမ္ဘာ့သွေးတောင်းခံမှု စီမံခန့်ခွဲမှု</h1>
+            <div class="user-info">
+                <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <span id="userName">Global Admin</span>
+                    <span class="badge" id="userRole">GLOBAL_ADMIN</span>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -33,27 +49,40 @@
                 <table id="requestsTable">
                     <thead>
                         <tr>
-                            <th>Requesting Hospital</th>
-                            <th>Blood Group</th>
+                            <th>တောင်းခံသည့် ဆေးရုံ</th>
+                            <th>သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <th>Quantity</th>
-                            <th>Urgency</th>
-                            <th>Status</th>
-                            <th>Assigned To</th>
-                            <th>Actions</th>
+                            <th>အမျိုးအစား (Component)</th> <!-- 🆕 Component ပြသရန် ကော်လံအသစ် -->
+                            <th>ပမာဏ</th>
+                            <th>အရေးကြီးအဆင့်</th>
+                            <th>အခြေအနေ</th>
+                            <th>တာဝန်ယူသူ</th>
+                            <th>ဆောင်ရွက်ချက်</th>
                         </tr>
                     </thead>
                     <tbody id="requestsBody">
-                        <tr><td colspan="8">Loading...</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted" style="color: var(--text-muted);">ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- JS Scripts (မူရင်းအတိုင်း) -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/global_requests.js"></script>
+
+    <!-- 🟢 UI Only Script: User Name ကို "User" ဟု ပြောင်းလဲပေးခြင်း -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) {
+                    userNameEl.textContent = 'User'; 
+                }
+            }, 100);
+        });
+    </script>
 </body>
 </html>

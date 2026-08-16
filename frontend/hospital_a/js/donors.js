@@ -1,5 +1,5 @@
 // ============================================
-// Donor Management (UPDATED with Quantity)
+// Donor Management (UPDATED with Traceability History)
 // ============================================
 let editingDonorId = null;
 
@@ -58,7 +58,9 @@ async function loadDonors() {
                     <td><span class="badge">${donor.blood_group}</span></td>
                     <td>${donor.rh_factor}</td>
                     <td>${donor.contact_phone || '-'}</td>
-                    <td>
+                    <td style="text-align: center;">
+                        <!-- 🟢 သွေးလှူဒါန်းမှု မှတ်တမ်းကြည့်ရန် 📜 ခလုတ်အသစ် -->
+                        <button class="btn btn-info btn-sm" onclick="openDonorHistory('${donor.id}', '${donor.name}')" title="သွေးလှူဒါန်းမှု မှတ်တမ်းကြည့်ရန်">📜</button>
                         <button class="btn btn-warning btn-sm" onclick="editDonor('${donor.id}')">✏️</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteDonor('${donor.id}')">🗑️</button>
                     </td>
@@ -68,6 +70,48 @@ async function loadDonors() {
     } catch (error) {
         tbody.innerHTML = '<tr><td colspan="6">Error loading donors.</td></tr>';
         console.error('Error loading donors:', error);
+    }
+}
+
+// ============================================
+// 🟢 Open Donor History Modal (Traceability)
+// ============================================
+async function openDonorHistory(donorId, donorName) {
+    const historyModal = document.getElementById('donorHistoryModal');
+    const nameEl = document.getElementById('historyDonorName');
+    const tbody = document.getElementById('donorHistoryBody');
+
+    nameEl.textContent = donorName;
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px;">မှတ်တမ်းများ ရယူနေသည်...</td></tr>';
+    
+    historyModal.classList.add('show');
+
+    try {
+        const result = await apiRequest(`/donors/${donorId}/history`, { method: 'GET' });
+        
+        if (result && result.status === 200 && result.data) {
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px;">ဤအလှူရှင်တွင် လှူဒါန်းမှု မှတ်တမ်းမရှိသေးပါ။</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = result.data.map(item => {
+                const componentDisplay = (item.blood_component || 'Whole_Blood').replace('_', ' ').toUpperCase();
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 10px;"><span class="badge" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${componentDisplay}</span></td>
+                        <td style="padding: 10px; font-weight: bold;">${item.quantity_ml} ml</td>
+                        <td style="padding: 10px;">${formatDate(item.expiry_date)}</td>
+                        <td style="padding: 10px;"><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px; color: red;">မှတ်တမ်းရယူရာတွင် အမှားအယွင်းရှိသည်။</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading donor history:', error);
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px; color: red;">Network error. Please try again.</td></tr>';
     }
 }
 
@@ -95,6 +139,11 @@ function openDonorModal(donorData = null) {
         document.getElementById('donorEmail').value = donorData.email || '';
         document.getElementById('donorLastDonation').value = donorData.last_donation_date || '';
         document.getElementById('donorQuantity').value = donorData.donation_quantity || '';
+        
+        document.getElementById('donorHemoglobin').value = donorData.hemoglobin_level || '';
+        document.getElementById('donorTemperature').value = donorData.temperature || '';
+        document.getElementById('donorBP').value = donorData.blood_pressure || '';
+
         editingDonorId = donorData.id;
     } else {
         title.textContent = 'Add New Donor';
@@ -159,6 +208,10 @@ async function handleDonorSubmit(e) {
         return;
     }
 
+    const hemoglobin = parseFloat(document.getElementById('donorHemoglobin').value);
+    const temperature = parseFloat(document.getElementById('donorTemperature').value);
+    const bp = document.getElementById('donorBP').value;
+
     const donorData = {
         name: document.getElementById('donorName').value,
         dob: document.getElementById('donorDob').value || null,
@@ -167,7 +220,10 @@ async function handleDonorSubmit(e) {
         contact_phone: document.getElementById('donorPhone').value || null,
         email: document.getElementById('donorEmail').value || null,
         last_donation_date: document.getElementById('donorLastDonation').value || null,
-        donation_quantity: quantity
+        donation_quantity: quantity,
+        hemoglobin_level: isNaN(hemoglobin) ? null : hemoglobin,
+        temperature: isNaN(temperature) ? null : temperature,
+        blood_pressure: bp || null
     };
 
     try {

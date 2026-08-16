@@ -125,55 +125,57 @@ class RequestService:
 
     @staticmethod
     def _decrement_inventory(db: Session, request: BloodRequest):
-        """Request Fulfilled ဖြစ်ရင် Inventory ထဲက သွေးပမာဏကို လျှော့ပေးပါ"""
+        """Request Fulfilled ဖြစ်ရင် Inventory ထဲက သွေးအိတ်အရေအတွက် (Units) ကိုက်ညီစွာ လျှော့ပေးပါ"""
         
-        # 🟢 Request က "A Positive" ဟု လာသဖြင့် Inventory နှင့် တိုက်စစ်ရန် ၂ ပိုင်း ပြန်ခွဲထုတ်ခြင်း
+        # 🟢 ၁။ သွေးအုပ်စုနှင့် RH Factor ခွဲထုတ်ခြင်း
         bg_parts = request.blood_group.split(" ")
         req_bg = bg_parts[0] if len(bg_parts) > 0 else request.blood_group
         req_rh = bg_parts[1] if len(bg_parts) > 1 else "Positive"
 
-        inventory_item = db.query(Inventory).filter(
+        # 🟢 ၂။ တောင်းဆိုထားသော အရေအတွက် (Units)
+        required_units = request.quantity_units
+
+        # 🟢 ၃။ Inventory ထဲမှ Available ဖြစ်နေသော သက်ဆိုင်ရာ သွေးအိတ်များကို အဟောင်းဆုံးမှစ၍ လိုအပ်သလောက် (limit) ဆွဲထုတ်ခြင်း
+        available_items = db.query(Inventory).filter(
             Inventory.hospital_id == request.hospital_id,
+            Inventory.blood_component == request.blood_component,
             Inventory.blood_group == req_bg,
             Inventory.rh_factor == req_rh,
             Inventory.status == "Available"
-        ).order_by(Inventory.expiry_date).first()
+        ).order_by(Inventory.expiry_date.asc()).limit(required_units).all()
 
-        if not inventory_item:
+        # 🟢 ၄။ လုံလောက်မှု ရှိ/မရှိ စစ်ဆေးခြင်း
+        if len(available_items) < required_units:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient stock for {request.blood_group}"
+                detail=f"Insufficient stock for {request.blood_component} ({request.blood_group}). Available: {len(available_items)} units, Required: {required_units} units."
             )
 
-        # 🟢 quantity_ml အစား quantity_units ကို ပြောင်းလဲအသုံးပြုထားပါသည်
-        if inventory_item.quantity_ml < request.quantity_units:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Not enough quantity. Available: {inventory_item.quantity_ml} units, Required: {request.quantity_units} units"
+        # 🟢 ၅။ လုံလောက်ပါက ဆွဲထုတ်လာသော သွေးအိတ်များအားလုံးကို "Used" ဟု ပြောင်းလဲခြင်း
+        for item in available_items:
+            item.status = "Used"  
+            item.blood_request_id = request.id  # 🟢 အသစ် - ဘယ် Request အတွက် သုံးလိုက်လဲ မှတ်သားခြင်း
+            db.add(item)
+
+            # သွေးအိတ်တစ်ခုစီအတွက် Sync Queue ထဲသို့ သီးခြားစီ မှတ်တမ်းတင်ခြင်း
+            inv_sync_data = {
+                "blood_component": item.blood_component,
+                "blood_group": item.blood_group,
+                "rh_factor": item.rh_factor,
+                "quantity_ml": item.quantity_ml,
+                "expiry_date": str(item.expiry_date),
+                "status": item.status,
+                "blood_request_id": str(request.id) if request.id else None # 🟢 အသစ် - Global ကိုပါ Sync လှမ်းပို့ပေးမည်
+            }
+            inv_sync_entry = SyncQueue(
+                hospital_id=request.hospital_id,
+                table_name="inventory",
+                record_id=item.id,
+                operation="UPDATE",
+                data=inv_sync_data,
+                status="PENDING"
             )
-
-        inventory_item.quantity_ml -= request.quantity_units
-        if inventory_item.quantity_ml == 0:
-            inventory_item.status = "Expired"
-
-        db.add(inventory_item)
-
-        inv_sync_data = {
-            "blood_group": inventory_item.blood_group,
-            "rh_factor": inventory_item.rh_factor,
-            "quantity_ml": inventory_item.quantity_ml,
-            "expiry_date": str(inventory_item.expiry_date),
-            "status": inventory_item.status
-        }
-        inv_sync_entry = SyncQueue(
-            hospital_id=request.hospital_id,
-            table_name="inventory",
-            record_id=inventory_item.id,
-            operation="UPDATE",
-            data=inv_sync_data,
-            status="PENDING"
-        )
-        db.add(inv_sync_entry)
+            db.add(inv_sync_entry)
 
     @staticmethod
     def delete_request(db: Session, req_id: UUID, hospital_id: UUID) -> bool:
@@ -204,6 +206,7 @@ class RequestService:
             "contact_phone": request.contact_phone,
             "contact_email": request.contact_email,
             "clinic_address": request.clinic_address,
+            "blood_component": request.blood_component, 
             "blood_group": request.blood_group,
             "quantity_units": request.quantity_units,
             "urgency": request.urgency,

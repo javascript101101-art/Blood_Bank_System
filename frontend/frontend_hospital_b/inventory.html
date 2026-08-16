@@ -3,30 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Inventory Management</title>
+    <title>ဆေးရုံ A - သွေးလက်ကျန် စီမံခန့်ခွဲမှု</title>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Font Load -->
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Global CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Inventory သီးသန့် CSS -->
+    <link rel="stylesheet" href="css/inventory.css">
 </head>
-<body>
+<body class="bg-animated">
+    
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🩸 Hospital A</h2>
+            <h2><i class="fas fa-tint" style="color: #dc2626;"></i> ဆေးရုံ A</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html">📊 Dashboard</a>
-            <a href="donors.html">👤 Donors</a>
-            <a href="inventory.html" class="active">📦 Inventory</a>
-            <a href="requests.html">📋 Requests</a>
-            <a href="global_request.html">🌐 Global Request</a>  <!-- 🆕 -->
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-home"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html" id="navDonors"><i class="fas fa-users"></i> သွေးလှူရှင်များ</a>
+            <a href="inventory.html" class="active"><i class="fas fa-boxes"></i> သွေးလက်ကျန်</a>
+            <a href="requests.html"><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာများ</a>
+            <a href="global_request.html" id="navGlobalRequest"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှု</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်မည်</a>
         </nav>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h1>📦 Inventory Management</h1>
-            <button class="btn btn-primary" id="addInventoryBtn">+ Add Inventory</button>
+            <h1><i class="fas fa-boxes" style="color: var(--hospital-blue); margin-right: 8px;"></i> သွေးလက်ကျန် စီမံခန့်ခွဲမှု</h1>
+            
+            <!-- 🟢 သွေးလက်ကျန်ကို Donor မှတစ်ဆင့်သာ ရယူရမည်ဖြစ်သဖြင့် ခလုတ်ကို ပိတ်ထားပါသည်
+            <button class="btn btn-primary" id="addInventoryBtn"><i class="fas fa-plus-circle"></i> သွေးလက်ကျန် အသစ်ထည့်ရန်</button>
+            -->
         </div>
 
         <!-- Inventory Table -->
@@ -35,73 +49,149 @@
                 <table id="inventoryTable">
                     <thead>
                         <tr>
-                            <th>Blood Group</th>
-                            <th>Rh Factor</th>
-                            <th>Quantity (ml)</th>
-                            <th>Expiry Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>အလှူရှင် (Donor)</th> <!-- 🟢 အလှူရှင် Column အသစ် -->
+                            <th style="padding-left: 0;">သွေးအုပ်စု</th>
+                            <th>အာအိတ်ဖိုဇီတစ်/နီဂေတစ် (Rh)</th>
+                            <th>အမျိုးအစား (Component)</th>
+                            <th>ပမာဏ (ml)</th>
+                            <th>သက်တမ်းကုန်ဆုံးရက်</th>
+                            <th>အခြေအနေ</th>
+                            <th>မှတ်တမ်း (History)</th> 
+                            <th style="padding-right: 0; text-align: center;">ဆောင်ရွက်ချက်</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryBody">
-                        <tr><td colspan="6">Loading...</td></tr>
+                        <!-- 🟢 colspan 9 သို့ ပြောင်းထားပါသည် -->
+                        <tr><td colspan="9" class="text-center text-muted">ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Add/Edit Inventory Modal -->
+    <!-- ===== Add/Edit Inventory Modal ===== -->
     <div id="inventoryModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">Add Inventory</h2>
+                <h2 id="modalTitle"><i class="fas fa-plus-circle" style="color: var(--blood-red);"></i> သွေးလက်ကျန် ထည့်သွင်းရန်</h2>
                 <span class="close">&times;</span>
             </div>
-            <form id="inventoryForm">
+            
+            <form id="inventoryForm" class="inventory-form-grid">
                 <input type="hidden" id="inventoryId">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="invBloodGroup">Blood Group *</label>
-                        <select id="invBloodGroup" required>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="AB">AB</option>
-                            <option value="O">O</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="invRhFactor">Rh Factor *</label>
-                        <select id="invRhFactor" required>
-                            <option value="Positive">Positive</option>
-                            <option value="Negative">Negative</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="invQuantity">Quantity (ml) *</label>
-                    <input type="number" id="invQuantity" min="0" required placeholder="Enter quantity in ml">
-                </div>
-                <div class="form-group">
-                    <label for="invExpiryDate">Expiry Date *</label>
-                    <input type="date" id="invExpiryDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="invStatus">Status</label>
-                    <select id="invStatus">
-                        <option value="Available">Available</option>
-                        <option value="Expired">Expired</option>
-                        <option value="Quarantined">Quarantined</option>
+                
+                <!-- Row 1 -->
+                <div class="inventory-form-group">
+                    <label for="invBloodGroup">သွေးအုပ်စု <span style="color: #dc2626;">*</span></label>
+                    <select id="invBloodGroup" required>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="AB">AB</option>
+                        <option value="O">O</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Save Inventory</button>
+                <div class="inventory-form-group">
+                    <label for="invRhFactor">Rh Factor <span style="color: #dc2626;">*</span></label>
+                    <select id="invRhFactor" required>
+                        <option value="Positive">Positive</option>
+                        <option value="Negative">Negative</option>
+                    </select>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="inventory-form-group">
+                    <label for="invQuantity">ပမာဏ (ml) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" id="invQuantity" min="0" required placeholder="ပမာဏကို ml ဖြင့် ထည့်ပါ">
+                </div>
+                <div class="inventory-form-group">
+                    <label for="invExpiryDate">သက်တမ်းကုန်ဆုံးရက် <span style="color: #dc2626;">*</span></label>
+                    <input type="date" id="invExpiryDate" required>
+                </div>
+
+                <!-- Row 3 (Full width) -->
+                <div class="inventory-form-group" style="grid-column: 1 / -1;">
+                    <label for="invStatus">အခြေအနေ</label>
+                    <select id="invStatus">
+                        <option value="Available">ရရှိနိုင်သည် (Available)</option>
+                        <option value="Expired">သက်တမ်းကုန်ဆုံး (Expired)</option>
+                        <option value="Quarantined">စစ်ဆေးဆဲ (Quarantined)</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="inventory-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> အချက်အလက် သိမ်းမည်</button>
+                    <button type="button" class="btn btn-secondary-outline close">ပယ်ဖျက်မည်</button>
+                </div>
+
                 <div id="inventoryFormError" class="error-message" style="display:none;"></div>
             </form>
         </div>
     </div>
 
+    <!-- 🟢 ===== Component Split Modal (သွေးခွဲထုတ်ရန် သီးသန့် Modal) ===== -->
+    <div id="splitModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="splitModalTitle"><i class="fas fa-flask" style="color: var(--hospital-blue);"></i> သွေးအစိတ်အပိုင်း ခွဲထုတ်ရန်</h2>
+                <span class="close split-close">&times;</span>
+            </div>
+            
+            <form id="splitForm" class="donor-form-grid">
+                <input type="hidden" id="splitInvId">
+                
+                <div class="donor-form-group" style="grid-column: span 2; background-color: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>မူလသွေးပမာဏ (Whole Blood): </strong> <span id="originalQuantityDisplay" style="color: #dc2626; font-weight: bold;">0</span> ml
+                </div>
+
+                <div class="donor-form-group">
+                    <label for="splitRedCells">သွေးနီဥ (Red Cells) ml</label>
+                    <input type="number" id="splitRedCells" min="0" value="0">
+                </div>
+                
+                <div class="donor-form-group">
+                    <label for="splitPlasma">သွေးရည်ကြည် (Plasma) ml</label>
+                    <input type="number" id="splitPlasma" min="0" value="0">
+                </div>
+
+                <div class="donor-form-group">
+                    <label for="splitPlatelets">သွေးဥမွှား (Platelets) ml</label>
+                    <input type="number" id="splitPlatelets" min="0" value="0">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="donor-form-actions" style="grid-column: span 2; margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-cogs"></i> ခွဲထုတ်မည်</button>
+                    <button type="button" class="btn btn-secondary-outline split-close">ပယ်ဖျက်မည်</button>
+                </div>
+
+                <div id="splitFormError" class="error-message" style="display:none; grid-column: span 2;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JS Scripts -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/inventory.js"></script>
+
+    <!-- 🟢 UI ONLY Script: Modal အားလုံးအတွက် လုပ်ဆောင်နိုင်အောင် ပြင်ဆင်ထားသည် -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event Delegation ကို သုံးပြီး Modal ပိတ်မည့် ခလုတ်အားလုံးကို ထိန်းချုပ်ပါမည်
+            document.body.addEventListener('click', function(e) {
+                // 'X' သို့မဟုတ် 'ပယ်ဖျက်မည်' ခလုတ်များကို နှိပ်လျှင်
+                if (e.target.closest('.close') || e.target.closest('.split-close')) {
+                    const modal = e.target.closest('.modal');
+                    if (modal) modal.classList.remove('show');
+                }
+                
+                // Modal အပြင်ဘက်ကို နှိပ်လျှင်
+                if (e.target.classList.contains('modal')) {
+                    e.target.classList.remove('show');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

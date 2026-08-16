@@ -4,6 +4,7 @@ from uuid import UUID
 from typing import Optional, List
 
 class GlobalInventoryBase(BaseModel):
+    blood_component: str # 🟢 သွေးအစိတ်အပိုင်း အသစ်ထည့်သွင်းထားပါသည်
     blood_group: str
     rh_factor: str
     quantity_ml: int
@@ -24,7 +25,8 @@ class GlobalInventoryResponse(GlobalInventoryBase):
 
 
 class GlobalInventorySummary(BaseModel):
-    """Blood type အလိုက် စုစုပေါင်း"""
+    """Blood type နှင့် Component အလိုက် စုစုပေါင်း"""
+    blood_component: str # 🟢 Summary တွင် Component ပါဝင်ရန် ထည့်သွင်းထားပါသည်
     blood_group: str
     rh_factor: str
     total_ml: int
@@ -32,6 +34,7 @@ class GlobalInventorySummary(BaseModel):
 
 class DeliverBloodRequest(BaseModel):
     """Global Inventory ကနေ Hospital ဆီ Blood ပို့ရန်"""
+    blood_component: str # 🟢 ပို့ဆောင်ရာတွင်လည်း Component ကို ခွဲခြားရန် ထည့်သွင်းထားပါသည်
     blood_group: str
     rh_factor: str
     quantity_ml: int = Field(..., gt=0)

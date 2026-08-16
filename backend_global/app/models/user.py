@@ -15,4 +15,5 @@ class User(BaseModel):
     is_active = Column(Boolean, default=True)
 
     hospital = relationship("Hospital", back_populates="users")
-    requests = relationship("BloodRequest", back_populates="requester")
+    # 🟢 ဤလိုင်းကို ဖယ်ရှားပါ (သို့မဟုတ် # ဖြင့် မှတ်ထားပါ)
+    # requests = relationship("BloodRequest", back_populates="requester")
