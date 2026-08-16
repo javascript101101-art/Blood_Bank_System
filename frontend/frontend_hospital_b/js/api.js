@@ -1,14 +1,12 @@
 // ============================================
-// API Configuration (Hospital B)
+// API Configuration
 // ============================================
-// Hospital B Server Port: 8002
-// Frontend Port: 5502
 const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8002/api/v1'   // Hospital B Server (Local)
-    : 'https://blood-hospital-b.onrender.com/api/v1';  // Production
+    ? 'http://localhost:8002/api/v1'
+    : 'https://blood-local-hospital-a.onrender.com/api/v1';
 
 // ============================================
-// Fetch Wrapper with JWT Token
+// Fetch Wrapper with JWT Token (FIXED)
 // ============================================
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('access_token');
@@ -35,12 +33,12 @@ async function apiRequest(endpoint, options = {}) {
             return null;
         }
 
-        // 204 No Content - No body to parse
+        // ★★★ FIX: 204 No Content အတွက် JSON Parse မလုပ်တော့ဘူး ★★★
         if (response.status === 204) {
             return { status: response.status, data: null };
         }
 
-        // Parse JSON response
+        // Only try to parse JSON for non-204 responses
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
@@ -50,8 +48,9 @@ async function apiRequest(endpoint, options = {}) {
         return { status: response.status, data: null };
 
     } catch (error) {
+        // Network error (server down, CORS, etc.)
         console.error('API Request Error:', error);
-        throw error;
+        throw error; // ဒီ Error ကို Caller ဆီ ပြန်ပို့ပါ
     }
 }
 

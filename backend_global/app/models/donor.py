@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date, Integer, ForeignKey
+from sqlalchemy import Column, String, Date, Integer, Float, ForeignKey # 🟢 Float ကို import ထပ်လုပ်ထားပါသည်
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.models.base import BaseModel
@@ -14,6 +14,11 @@ class Donor(BaseModel):
     contact_phone = Column(String(20))
     email = Column(String(255))
     last_donation_date = Column(Date)
-    donation_quantity = Column(Integer, nullable=False)  # 🆕 ဒီ line ကို ထည့်ပါ
+    donation_quantity = Column(Integer, nullable=False)
+    
+    # 🟢 အသစ်ထပ်တိုးထားသော ကျန်းမာရေး စစ်ဆေးချက်များ (Local နှင့် ကိုက်ညီစေရန်)
+    hemoglobin_level = Column(Float)
+    temperature = Column(Float)
+    blood_pressure = Column(String(20))
 
     hospital = relationship("Hospital", back_populates="donors")

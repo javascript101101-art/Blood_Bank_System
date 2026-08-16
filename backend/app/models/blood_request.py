@@ -19,6 +19,7 @@ class BloodRequest(BaseModel):
     clinic_address = Column(Text, nullable=False)
 
     # 🩸 BLOOD REQUEST DETAILS (Form အသစ်အတွက်)
+    blood_component = Column(String(50), default="Whole_Blood", nullable=False) # 🟢 သွေးအစိတ်အပိုင်း အသစ်ထပ်တိုး
     blood_group = Column(String(20), nullable=False) # e.g., "A Positive"
     quantity_units = Column(Integer, nullable=False) # quantity_ml အစား ပြင်ဆင်ထားသည်
     urgency = Column(String(50), default="Normal Request")

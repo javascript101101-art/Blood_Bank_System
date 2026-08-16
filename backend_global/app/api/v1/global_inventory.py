@@ -23,12 +23,17 @@ def get_inventory_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(role_required("Global_Admin"))
 ):
-    """သွေးအုပ်စုနဲ့ Rh Factor အလိုက် စုစုပေါင်း သွေးပမာဏကို တွက်ချက်ပေးခြင်း"""
+    """သွေးအုပ်စု၊ Rh Factor နှင့် Component အလိုက် စုစုပေါင်း သွေးပမာဏကို တွက်ချက်ပေးခြင်း"""
     summary = db.query(
+        GlobalInventory.blood_component, # 🟢 Component ပါ ထည့်သွင်းထားပါသည်
         GlobalInventory.blood_group,
         GlobalInventory.rh_factor,
         func.sum(GlobalInventory.quantity_ml).label("total_ml")
+    ).filter(
+        GlobalInventory.quantity_ml > 0,
+        GlobalInventory.blood_component != "Whole_Blood" # 🟢 Whole Blood ဖယ်ထုတ်ရန်
     ).group_by(
+        GlobalInventory.blood_component,
         GlobalInventory.blood_group,
         GlobalInventory.rh_factor
     ).all()
@@ -37,6 +42,7 @@ def get_inventory_summary(
     result = []
     for item in summary:
         result.append({
+            "blood_component": item.blood_component, # 🟢 ဤနေရာတွင် ထည့်ပေးလိုက်ပါသည်
             "blood_group": item.blood_group,
             "rh_factor": item.rh_factor,
             "total_ml": item.total_ml or 0
@@ -66,6 +72,7 @@ def add_blood_to_global(
     """Global Admin မှ သွေးအသစ်ကို Inventory သို့ တိုက်ရိုက်ထည့်သွင်းခြင်း"""
     try:
         new_inventory = GlobalInventory(
+            blood_component=payload.blood_component, # 🟢 Payload မှ Component ကို ထည့်သွင်းမည်
             blood_group=payload.blood_group,
             rh_factor=payload.rh_factor,
             quantity_ml=payload.quantity_ml,
@@ -96,10 +103,15 @@ def get_global_low_stock_warnings(
     
     # GROUP BY လုပ်ပြီး SUM တွက်ချက်ကာ threshold အောက် ငယ်သည်များကိုသာ HAVING ဖြင့် Filter လုပ်ပါသည်
     summary = db.query(
+        GlobalInventory.blood_component, # 🟢 Component ပါ ထည့်သွင်းထားပါသည်
         GlobalInventory.blood_group,
         GlobalInventory.rh_factor,
         func.sum(GlobalInventory.quantity_ml).label("total_ml")
+    ).filter(
+        GlobalInventory.quantity_ml > 0,
+        GlobalInventory.blood_component != "Whole_Blood" # 🟢 Whole Blood ဖယ်ထုတ်ရန်
     ).group_by(
+        GlobalInventory.blood_component,
         GlobalInventory.blood_group,
         GlobalInventory.rh_factor
     ).having(func.sum(GlobalInventory.quantity_ml) < threshold).all()
@@ -107,12 +119,14 @@ def get_global_low_stock_warnings(
     warnings = []
     for item in summary:
         current_total = item.total_ml or 0
+        comp_name = item.blood_component.replace('_', ' ').title()
         warnings.append({
+            "blood_component": item.blood_component,
             "blood_type": f"{item.blood_group} {item.rh_factor}",
             "blood_group": item.blood_group,
             "rh_factor": item.rh_factor,
             "total_quantity": current_total,
-            "warning_message": f"Central Stock Warning: {item.blood_group} {item.rh_factor} is running low ({current_total} ml remaining)."
+            "warning_message": f"Central Stock Warning: {item.blood_group} {item.rh_factor} ({comp_name}) is running low ({current_total} ml remaining)."
         })
         
     return {"alerts": warnings}

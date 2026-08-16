@@ -3,29 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Donor Management</title>
+    <title>ဆေးရုံ A - သွေးလှူရှင်များ စီမံခန့်ခွဲမှု</title>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Font Load -->
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/donors.css">
 </head>
-<body>
+<body class="bg-animated">
+    
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🩸 Hospital A</h2>
+            <h2><i class="fas fa-tint" style="color: #dc2626;"></i> ဆေးရုံ A</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="active">📊 Dashboard</a>
-            <a href="donors.html">👤 Donors</a>
-            <a href="inventory.html">📦 Inventory</a>
-            <a href="requests.html">📋 Requests</a>
-            <a href="global_request.html">🌐 Global Request</a>  <!-- 🆕 -->
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-home"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html" id="navDonors" class="active"><i class="fas fa-users"></i> သွေးလှူရှင်များ</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်</a>
+            <a href="requests.html"><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာများ</a>
+            <a href="global_request.html" id="navGlobalRequest"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှု</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်မည်</a>
         </nav>
     </div>
 
     <div class="main-content">
         <div class="top-bar">
-            <h1>Donor Management</h1>
-            <button class="btn btn-primary" id="addDonorBtn">+ Add Donor</button>
+            <h1><i class="fas fa-user-friends" style="color: var(--hospital-blue); margin-right: 8px;"></i> သွေးလှူရှင်များ စီမံခန့်ခွဲမှု</h1>
+            <button class="btn btn-primary" id="addDonorBtn"><i class="fas fa-plus-circle"></i> သွေးလှူရှင် အသစ်ထည့်ရန်</button>
         </div>
 
         <div class="card">
@@ -33,83 +42,164 @@
                 <table id="donorsTable">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>DOB</th>
-                            <th>Blood Group</th>
+                            <th style="padding-left: 0;">အမည်</th>
+                            <th>မွေးနေ့</th>
+                            <th>သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <th>Phone</th>
-                            <th>Actions</th>
+                            <th>ဖုန်းနံပါတ်</th>
+                            <th style="padding-right: 0; text-align: center;">ဆောင်ရွက်ချက်</th>
                         </tr>
                     </thead>
                     <tbody id="donorsBody">
-                        <tr><td colspan="6">Loading...</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted">ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Add/Edit Donor Modal -->
+    <!-- ===== Add/Edit Donor Modal ===== -->
     <div id="donorModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">Add Donor</h2>
+                <h2 id="modalTitle"><i class="fas fa-user-plus" style="color: var(--blood-red);"></i> သွေးလှူရှင် ထည့်သွင်းရန်</h2>
                 <span class="close">&times;</span>
             </div>
-            <form id="donorForm">
+            
+            <form id="donorForm" class="donor-form-grid">
                 <input type="hidden" id="donorId">
-                <div class="form-group">
-                    <label for="donorName">Name *</label>
-                    <input type="text" id="donorName" required>
+                
+                <!-- Row 1 -->
+                <div class="donor-form-group">
+                    <label for="donorName">အမည် <span style="color: #dc2626;">*</span></label>
+                    <input type="text" id="donorName" required placeholder="အမည်ထည့်ပါ">
                 </div>
-                <div class="form-group">
-                    <label for="donorDob">Date of Birth</label>
+                <div class="donor-form-group">
+                    <label for="donorDob">မွေးနေ့</label>
                     <input type="date" id="donorDob">
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="donorBloodGroup">Blood Group *</label>
-                        <select id="donorBloodGroup" required>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="AB">AB</option>
-                            <option value="O">O</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="donorRhFactor">Rh Factor *</label>
-                        <select id="donorRhFactor" required>
-                            <option value="Positive">Positive</option>
-                            <option value="Negative">Negative</option>
-                        </select>
-                    </div>
+
+                <!-- Row 2 -->
+                <div class="donor-form-group">
+                    <label for="donorBloodGroup">သွေးအုပ်စု <span style="color: #dc2626;">*</span></label>
+                    <select id="donorBloodGroup" required>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="AB">AB</option>
+                        <option value="O">O</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label for="donorPhone">Phone</label>
+                <div class="donor-form-group">
+                    <label for="donorRhFactor">Rh Factor <span style="color: #dc2626;">*</span></label>
+                    <select id="donorRhFactor" required>
+                        <option value="Positive">Positive</option>
+                        <option value="Negative">Negative</option>
+                    </select>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="donor-form-group">
+                    <label for="donorPhone">ဖုန်းနံပါတ်</label>
                     <input type="text" id="donorPhone" placeholder="09xxxxxxxxx">
                 </div>
-                <div class="form-group">
-                    <label for="donorEmail">Email</label>
+                <div class="donor-form-group">
+                    <label for="donorEmail">အီးမေးလ် (Email)</label>
                     <input type="email" id="donorEmail" placeholder="example@email.com">
                 </div>
-                <div class="form-group">
-                    <label for="donorLastDonation">Last Donation Date</label>
+
+                <!-- Row 4 -->
+                <div class="donor-form-group">
+                    <label for="donorLastDonation">နောက်ဆုံး လှူဒါန်းခဲ့သည့်ရက်</label>
                     <input type="date" id="donorLastDonation">
                 </div>
-                <!-- 🆕 Donation Quantity Field - REQUIRED -->
-                <div class="form-group">
-                    <label for="donorQuantity">Donation Quantity (ml) *</label>
-                    <input type="number" id="donorQuantity" min="100" max="600" required placeholder="Enter quantity (100-600ml)">
-                    <small style="color: #888;">Min: 100ml, Max: 600ml</small>
+                <div class="donor-form-group">
+                    <label for="donorQuantity">လှူဒါန်းမည့် ပမာဏ (ml) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" id="donorQuantity" min="100" max="600" required placeholder="ပမာဏထည့်ပါ (100-600ml)">
+                    <small style="color: #94a3b8; font-size: 11px; margin-top: 4px;">အနည်းဆုံး: 100ml, အများဆုံး: 600ml</small>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Save Donor</button>
-                <div id="donorFormError" class="error-message" style="display:none;"></div>
+
+                <!-- Row 5: ကျန်းမာရေး စစ်ဆေးချက်များ -->
+                <div class="donor-form-group">
+                    <label for="donorHemoglobin">သွေးအား (Hemoglobin) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" step="0.1" id="donorHemoglobin" required placeholder="ဥပမာ - 12.5 (g/dL)">
+                </div>
+                <div class="donor-form-group">
+                    <label for="donorTemperature">ကိုယ်အပူချိန် (°C)</label>
+                    <input type="number" step="0.1" id="donorTemperature" placeholder="ဥပမာ - 36.5">
+                </div>
+
+                <!-- Row 6 -->
+                <div class="donor-form-group" style="grid-column: span 2;">
+                    <label for="donorBP">သွေးပေါင်ချိန် (Blood Pressure)</label>
+                    <input type="text" id="donorBP" placeholder="ဥပမာ - 120/80">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="donor-form-actions" style="grid-column: span 2; margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> အချက်အလက် သိမ်းမည်</button>
+                    <button type="button" class="btn btn-secondary-outline close">ပယ်ဖျက်မည်</button>
+                </div>
+
+                <div id="donorFormError" class="error-message" style="display:none; grid-column: span 2;"></div>
             </form>
         </div>
     </div>
 
+    <!-- 🟢 ===== Donor History Modal (အလှူရှင် သွေးမှတ်တမ်းကြည့်ရန် Modal) အသစ် ===== -->
+    <div id="donorHistoryModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-history" style="color: var(--hospital-blue);"></i> အလှူရှင်၏ သွေးလှူဒါန်းမှု မှတ်တမ်း</h2>
+                <span class="close history-close">&times;</span>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <p style="margin-bottom: 10px; font-weight: bold; color: #334155;">အလှူရှင်အမည်: <span id="historyDonorName" style="color: var(--blood-red);"></span></p>
+                
+                <table id="donorHistoryTable" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <thead>
+                        <tr style="background-color: #f1f5f9; text-align: left;">
+                            <th style="padding: 8px;">သွေးအစိတ်အပိုင်း</th>
+                            <th style="padding: 8px;">ပမာဏ (ml)</th>
+                            <th style="padding: 8px;">သက်တမ်းကုန်ရက်</th>
+                            <th style="padding: 8px;">အခြေအနေ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donorHistoryBody">
+                        <tr><td colspan="4" class="text-center text-muted" style="padding: 15px;">ဒေတာ ရယူနေသည်...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-secondary-outline history-close">ပိတ်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Scripts -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/donors.js"></script>
+
+    <!-- UI Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const donorModal = document.getElementById('donorModal');
+            const historyModal = document.getElementById('donorHistoryModal');
+            
+            // Modal ပိတ်မည့် ခလုတ်များအတွက် Event Delegation
+            document.body.addEventListener('click', function(e) {
+                if (e.target.closest('.close') || e.target.closest('.history-close')) {
+                    if (donorModal) donorModal.classList.remove('show');
+                    if (historyModal) historyModal.classList.remove('show');
+                }
+                
+                if (e.target.classList.contains('modal')) {
+                    e.target.classList.remove('show');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

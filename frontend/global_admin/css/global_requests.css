@@ -1,0 +1,36 @@
+/* ============================================================
+   GLOBAL ADMIN GLOBAL REQUESTS PAGE SPECIFIC STYLES
+   ============================================================ */
+
+/* ===== Table Header Override ===== */
+#requestsTable th {
+    color: #ffffff;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Table Action Buttons (Optional, if JS renders them) ===== */
+#requestsTable .btn-primary {
+    background: var(--medical-cyan);
+    color: #0a0b1e;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+#requestsTable .btn-primary:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+#requestsTable .btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 4px 14px;
+    font-size: 12px;
+}
+#requestsTable .btn-secondary:hover {
+    background: rgba(255,255,255,0.2);
+}

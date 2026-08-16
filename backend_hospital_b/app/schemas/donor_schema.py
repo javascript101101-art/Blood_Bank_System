@@ -11,7 +11,12 @@ class DonorBase(BaseModel):
     contact_phone: Optional[str] = Field(None, max_length=20)
     email: Optional[str] = Field(None, max_length=255)
     last_donation_date: Optional[date] = None
-    donation_quantity: int = Field(..., ge=100, le=600)  # ✅ REQUIRED
+    donation_quantity: int = Field(..., ge=100, le=600)  # ✅ Required (100ml to 600ml)
+
+    # 🩸 ကျန်းမာရေး စစ်ဆေးချက် အချက်အလက်များ (Health Check Validation)
+    hemoglobin_level: Optional[float] = Field(None, ge=0, le=25)
+    temperature: Optional[float] = Field(None, ge=30, le=45)
+    blood_pressure: Optional[str] = Field(None, max_length=20)
 
     @validator('donation_quantity')
     def validate_quantity(cls, v):

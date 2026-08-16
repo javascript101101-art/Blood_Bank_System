@@ -1,10 +1,11 @@
-from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.user import User
+from app.models.clinic_profile import ClinicProfile  # 🟢 Clinic Profile ကို Import လုပ်ထားပါသည်
 from app.schemas.auth_schema import RegisterRequest
 import uuid
 
@@ -13,11 +14,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class AuthService:
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        try:
-            return pwd_context.verify(plain_password, hashed_password)
-        except Exception as e:
-            print(f"❌ Password verification error: {e}")
-            return False
+        return pwd_context.verify(plain_password, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
@@ -40,12 +37,15 @@ class AuthService:
         except JWTError:
             return None
 
+    # 🆕 Self-Registration (Clinic Data ပါ တစ်ပြိုင်နက်တည်း ထည့်ပေးမည်)
     @staticmethod
     def register_user(db: Session, register_data: RegisterRequest, hospital_id: str) -> dict:
+        # ၁။ Username ရှိပြီးသားလား စစ်ပါ
         existing_user = db.query(User).filter(User.username == register_data.username).first()
         if existing_user:
             raise ValueError("Username already exists")
 
+        # ၂။ User အသစ်ဖန်တီးပါ (is_approved = False)
         new_user = User(
             id=uuid.uuid4(),
             hospital_id=hospital_id,
@@ -54,9 +54,25 @@ class AuthService:
             full_name=register_data.full_name,
             role=register_data.role,
             is_active=True,
-            is_approved=False
+            is_approved=False  # Admin က Approve လုပ်မှသာ Login ဝင်လို့ရမယ်
         )
         db.add(new_user)
+        # 🟢 ချက်ချင်း Commit မလုပ်သေးဘဲ ID ထွက်လာအောင် flush အရင်လုပ်ပါမယ်
+        db.flush()
+
+        # ၃။ 🟢 Clinic ဖြစ်ခဲ့ရင် ClinicProfile Table ထဲကိုပါ Data တစ်ခါတည်း ထည့်ပါမယ် (ဒီနေရာကို ပြင်ထားပါသည်)
+        if register_data.role == "Clinic":
+            clinic_profile = ClinicProfile(
+                user_id=new_user.id,
+                clinic_name=register_data.clinic_name,
+                license=register_data.license,
+                contact_phone=register_data.contact_phone,
+                contact_email=register_data.contact_email,
+                clinic_address=register_data.clinic_address
+            )
+            db.add(clinic_profile)
+
+        # ၄။ အကုန်အဆင်ပြေမှ Table (၂) ခုလုံးအတွက် တစ်ပြိုင်နက်တည်း Save (Commit) လုပ်ပါမယ်
         db.commit()
         db.refresh(new_user)
 
@@ -69,6 +85,7 @@ class AuthService:
             "message": "Registration successful. Please wait for admin approval."
         }
 
+    # 🆕 Admin Approval for Staff
     @staticmethod
     def approve_user(db: Session, user_id: str, approved_by: User) -> dict:
         user = db.query(User).filter(User.id == user_id).first()
@@ -78,6 +95,7 @@ class AuthService:
         if user.is_approved:
             raise ValueError("User already approved")
 
+        # Admin က Approve လုပ်ပါ
         user.is_approved = True
         db.commit()
         db.refresh(user)

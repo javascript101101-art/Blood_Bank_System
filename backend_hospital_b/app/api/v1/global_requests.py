@@ -46,7 +46,32 @@ def update_global_request(
     return request
 
 # ==========================================
-# 🆕 အသစ်ထပ်ထည့်ထားသော Receive Delivery API
+# 🆕 Assign ချခံရသော ဆေးရုံ (Hospital B) မှ သွေးပို့ပေးရန် (Fulfill)
+# ==========================================
+@router.post("/{req_id}/fulfill")
+def fulfill_global_request_local(
+    req_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(role_required("Hospital_Admin"))
+):
+    """
+    Global က Assign ချလိုက်တဲ့ Request ကို Local ဆေးရုံက သွေးပို့ပေးလိုက်ကြောင်း Confirm လုပ်ရန် 
+    (Local Inventory မှ သက်ဆိုင်ရာ Component သွေးအိတ်ကို နှုတ်မည်)
+    """
+    try:
+        result = GlobalRequestService.fulfill_request_to_global(
+            db=db, 
+            req_id=req_id, 
+            hospital_id=current_user.hospital_id
+        )
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# 🆕 Global မှ ပို့လိုက်သော သွေးကို လက်ခံရန် (Receive Delivery)
 # ==========================================
 @router.post("/{req_id}/receive")
 def receive_blood_delivery(

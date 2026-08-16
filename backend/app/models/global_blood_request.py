@@ -8,8 +8,14 @@ class GlobalBloodRequest(BaseModel):
     __tablename__ = "global_blood_requests"
 
     requesting_hospital_id = Column(UUID(as_uuid=True), ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False)
-    blood_group = Column(String(3), nullable=False)
+    
+    # 🟢 String(3) မှ String(50) သို့ ပြောင်းထားပါသည် (Error မတက်စေရန်)
+    blood_group = Column(String(50), nullable=False)
     rh_factor = Column(String(10), nullable=False)
+    
+    # 🆕 အခုမှ အသစ်ထပ်ထည့်လိုက်သော Component ကော်လံ
+    blood_component = Column(String(50), default="Whole_Blood")
+    
     quantity_ml = Column(Integer, nullable=False)
     urgency = Column(String(20), default="Normal")
     status = Column(String(20), default="Pending")

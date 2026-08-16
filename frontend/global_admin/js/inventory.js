@@ -1,5 +1,5 @@
 // ============================================
-// Global Admin - All Inventory Management
+// Global Admin - All Inventory Management (UPDATED with Components)
 // ============================================
 let allInventory = []; // Local hospitals stock
 let hospitals = [];
@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 async function loadGlobalInventory() {
     const tbody = document.getElementById('globalInventoryBody');
-    tbody.innerHTML = '<tr><td colspan="3">Loading Global Stock...</td></tr>';
+    // 🟢 Column တိုးသွား၍ colspan="4" သို့ ပြောင်းထားပါသည်
+    tbody.innerHTML = '<tr><td colspan="4">Loading Global Stock...</td></tr>';
 
     try {
         // Backend က summary API ကို လှမ်းခေါ်ပါမည်
@@ -39,10 +40,10 @@ async function loadGlobalInventory() {
             globalInventory = result.data;
             renderGlobalTable(globalInventory);
         } else {
-            tbody.innerHTML = '<tr><td colspan="3">No global inventory found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4">No global inventory found.</td></tr>';
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="3">Error loading global inventory.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4">Error loading global inventory.</td></tr>';
         console.error('Error loading global inventory:', error);
     }
 }
@@ -51,17 +52,24 @@ function renderGlobalTable(data) {
     const tbody = document.getElementById('globalInventoryBody');
     
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3">No blood available in Global Stock.</td></tr>';
+        // 🟢 colspan="4"
+        tbody.innerHTML = '<tr><td colspan="4">No blood available in Global Stock.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = data.map(item => `
+    tbody.innerHTML = data.map(item => {
+        // 🟢 Component စာသားကို လှပအောင် ပြင်ဆင်ခြင်း
+        const componentDisplay = (item.blood_component || 'Whole_Blood').replace('_', ' ').toUpperCase();
+        
+        return `
         <tr>
             <td><span class="badge">${item.blood_group}</span></td>
             <td>${item.rh_factor}</td>
+            <!-- 🟢 Component ကို ဇယားတွင် ဖော်ပြခြင်း -->
+            <td><span class="badge" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-size: 11px;">${componentDisplay}</span></td>
             <td style="font-weight: bold; color: #28a745;">${item.total_ml} ml</td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 // ============================================
@@ -72,6 +80,8 @@ async function handleAddBlood(e) {
     
     const bloodGroup = document.getElementById('newBloodGroup').value;
     const rhFactor = document.getElementById('newRhFactor').value;
+    // 🟢 Component ကိုပါ ယူပါမည်
+    const bloodComponent = document.getElementById('newBloodComponent').value; 
     const quantity = parseInt(document.getElementById('newQuantity').value);
 
     if (!bloodGroup || !rhFactor || !quantity || quantity <= 0) {
@@ -83,6 +93,7 @@ async function handleAddBlood(e) {
         const payload = {
             blood_group: bloodGroup,
             rh_factor: rhFactor,
+            blood_component: bloodComponent, // 🟢 Payload တွင် ထည့်ပို့ပါမည်
             quantity_ml: quantity,
             source_hospital_id: null, // Global ကိုယ်တိုင်ထည့်တာမို့ Null
             source_request_id: null   // Request ကလာတာမဟုတ်လို့ Null
@@ -112,7 +123,8 @@ async function handleAddBlood(e) {
 // ============================================
 async function loadLocalInventory() {
     const tbody = document.getElementById('inventoryBody');
-    tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+    // 🟢 Column တိုးသွား၍ colspan="7" ပြောင်းထားပါသည်
+    tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
 
     try {
         const result = await apiRequest('/admin/inventory', { method: 'GET' });
@@ -121,10 +133,10 @@ async function loadLocalInventory() {
             allInventory = result.data;
             renderLocalTable(allInventory);
         } else {
-            tbody.innerHTML = '<tr><td colspan="6">Error loading inventory.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Error loading inventory.</td></tr>';
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="6">Error loading inventory.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">Error loading inventory.</td></tr>';
         console.error('Error loading inventory:', error);
     }
 }
@@ -133,20 +145,27 @@ function renderLocalTable(inventory) {
     const tbody = document.getElementById('inventoryBody');
     
     if (inventory.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">No inventory found.</td></tr>';
+        // 🟢 colspan="7"
+        tbody.innerHTML = '<tr><td colspan="7">No inventory found.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = inventory.map(item => `
+    tbody.innerHTML = inventory.map(item => {
+        // Component စာသားကို လှပအောင် ပြင်ဆင်ခြင်း (ဥပမာ Red_Cells -> RED CELLS)
+        const componentDisplay = (item.blood_component || 'Whole_Blood').replace('_', ' ').toUpperCase();
+        
+        return `
         <tr>
             <td>${item.hospital_id ? getHospitalName(item.hospital_id) : 'Unknown'}</td>
             <td><span class="badge">${item.blood_group}</span></td>
             <td>${item.rh_factor}</td>
+            <!-- 🟢 Component ကို ဇယားတွင် ဖော်ပြခြင်း -->
+            <td><span class="badge" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-size: 11px;">${componentDisplay}</span></td>
             <td>${item.quantity_ml}</td>
             <td>${item.expiry_date ? formatDate(item.expiry_date) : '-'}</td>
             <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 // ============================================

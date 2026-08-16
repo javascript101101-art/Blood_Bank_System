@@ -41,7 +41,7 @@ def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 # ============================================
-# 2. Self-Registration (Staff only)
+# 2. Self-Registration (Clinic only)
 # ============================================
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 def register(
@@ -49,11 +49,11 @@ def register(
     db: Session = Depends(get_db)
 ):
     try:
-        # Staff ပဲ Register လုပ်လို့ရမယ်
-        if register_data.role not in ["Lab_Staff", "Receptionist"]:
+        # 🟢 Clinic ပဲ Register လုပ်လို့ရမယ်
+        if register_data.role != "Clinic":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only Lab_Staff and Receptionist can register."
+                detail="Only External Clinic can register."
             )
         
         # Hospital A အတွက် (ခေတ္တအနေနဲ့ Hardcode)
@@ -73,12 +73,13 @@ def get_pending_users(
     current_user: User = Depends(role_required("Hospital_Admin"))
 ):
     """
-    Pending ဖြစ်နေတဲ့ Staff/Receptionist Users တွေကို ပြန်ပေးပါ
+    Pending ဖြစ်နေတဲ့ Clinic Users တွေကို ပြန်ပေးပါ
     """
     pending_users = db.query(User).filter(
         User.is_approved == False,
         User.is_active == True,
-        User.role.in_(["Lab_Staff", "Receptionist"])
+        # 🟢 Clinic များကိုသာ ဆွဲထုတ်ပါမည်
+        User.role == "Clinic"
     ).all()
     
     return [
@@ -103,17 +104,17 @@ def approve_user(
     current_user: User = Depends(role_required("Hospital_Admin"))
 ):
     """
-    Staff/Receptionist User ကို Approve/Reject လုပ်ပါ
+    Clinic User ကို Approve/Reject လုပ်ပါ
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # User က Staff/Receptionist ဖြစ်မှသာ
-    if user.role not in ["Lab_Staff", "Receptionist"]:
+    # 🟢 User က Clinic ဖြစ်မှသာ လက်ခံမည်
+    if user.role != "Clinic":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only staff users can be approved"
+            detail="Only clinic users can be approved"
         )
     
     # User က ပြီးသား Approved ဖြစ်နေရင်
@@ -138,4 +139,30 @@ def approve_user(
         "user_id": str(user.id),
         "is_active": user.is_active,
         "is_approved": user.is_approved
+    }
+
+# ============================================
+# 🆕 5. Get User Profile (For Auto-filling Clinic Data)
+# ============================================
+@router.get("/profile", response_model=dict)
+def get_user_profile(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    လက်ရှိ Login ဝင်ထားသော User ၏ Clinic Data များကို ယူရန်
+    """
+    profile = current_user.clinic_profile
+    
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Clinic profile not found."
+        )
+    
+    return {
+        "clinic_name": profile.clinic_name,
+        "license": profile.license,
+        "contact_phone": profile.contact_phone,
+        "contact_email": profile.contact_email,
+        "clinic_address": profile.clinic_address
     }

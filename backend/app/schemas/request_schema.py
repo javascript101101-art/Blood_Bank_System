@@ -10,6 +10,7 @@ class BloodRequestCreate(BaseModel):
     # 🚫 Clinic Data များကို ဖယ်ရှားထားပါသည် (Backend မှ Auto ဖြည့်မည်ဖြစ်သောကြောင့်)
     
     # 🩸 BLOOD REQUEST DETAILS
+    blood_component: str = Field(..., min_length=1, max_length=50, example="Red_Cells") # 🟢 သွေးအစိတ်အပိုင်း အသစ်ထပ်တိုး
     blood_group: str = Field(..., min_length=1, max_length=20, example="A Positive")
     quantity_units: int = Field(..., gt=0, example=2)
     urgency: Optional[str] = Field("Normal Request", max_length=50)
@@ -27,6 +28,7 @@ class BloodRequestUpdate(BaseModel):
     contact_email: Optional[EmailStr] = None
     clinic_address: Optional[str] = Field(None, min_length=1)
     
+    blood_component: Optional[str] = Field(None, min_length=1, max_length=50) # 🟢 သွေးအစိတ်အပိုင်း အသစ်ထပ်တိုး
     blood_group: Optional[str] = Field(None, min_length=1, max_length=20)
     quantity_units: Optional[int] = Field(None, gt=0)
     urgency: Optional[str] = Field(None, max_length=50)
@@ -50,6 +52,7 @@ class BloodRequestResponse(BaseModel):
     clinic_address: str
 
     # 🩸 BLOOD REQUEST DETAILS
+    blood_component: Optional[str] = "Whole_Blood" # 🟢 သွေးအစိတ်အပိုင်း အသစ်ထပ်တိုး (အဟောင်းတွေ error မတက်အောင် default ပေးထားပါသည်)
     blood_group: str
     quantity_units: int
     urgency: Optional[str] = None

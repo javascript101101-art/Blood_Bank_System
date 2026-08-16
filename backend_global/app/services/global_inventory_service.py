@@ -6,12 +6,12 @@ from app.models.global_inventory import GlobalInventory
 from app.models.global_blood_request import GlobalBloodRequest
 from app.schemas.global_inventory_schema import GlobalInventorySummary, DeliverBloodRequest
 
-
 class GlobalInventoryService:
 
     @staticmethod
     def add_blood(
         db: Session,
+        blood_component: str,  # 🟢 Component အသစ်ထည့်ပါသည်
         blood_group: str,
         rh_factor: str,
         quantity_ml: int,
@@ -20,6 +20,7 @@ class GlobalInventoryService:
     ) -> GlobalInventory:
         """Global Inventory မှာ Blood ထည့်မယ် (Supplier က Fulfill လုပ်တဲ့အခါ)"""
         inventory = GlobalInventory(
+            blood_component=blood_component, # 🟢 
             blood_group=blood_group,
             rh_factor=rh_factor,
             quantity_ml=quantity_ml,
@@ -34,6 +35,7 @@ class GlobalInventoryService:
     @staticmethod
     def remove_blood(
         db: Session,
+        blood_component: str, # 🟢 Component အသစ်ထည့်ပါသည်
         blood_group: str,
         rh_factor: str,
         quantity_ml: int
@@ -41,6 +43,7 @@ class GlobalInventoryService:
         """Global Inventory ကနေ Blood ဖြုတ်မယ် (Deliver လုပ်တဲ့အခါ)"""
         # FIFO (First In First Out) - အဟောင်းဆုံးကနေ စဖြုတ်
         inventories = db.query(GlobalInventory).filter(
+            GlobalInventory.blood_component == blood_component, # 🟢 Component ပါ စစ်ပါသည်
             GlobalInventory.blood_group == blood_group,
             GlobalInventory.rh_factor == rh_factor,
             GlobalInventory.quantity_ml > 0
@@ -61,9 +64,10 @@ class GlobalInventoryService:
         return remaining == 0
 
     @staticmethod
-    def get_total_by_blood_type(db: Session, blood_group: str, rh_factor: str) -> int:
+    def get_total_by_blood_type(db: Session, blood_component: str, blood_group: str, rh_factor: str) -> int:
         """Global Inventory မှာ စုစုပေါင်း ဘယ်လောက်ရှိလဲ"""
         total = db.query(func.sum(GlobalInventory.quantity_ml)).filter(
+            GlobalInventory.blood_component == blood_component, # 🟢 Component ပါ စစ်ပါသည်
             GlobalInventory.blood_group == blood_group,
             GlobalInventory.rh_factor == rh_factor
         ).scalar()
@@ -71,23 +75,28 @@ class GlobalInventoryService:
 
     @staticmethod
     def get_summary(db: Session) -> List[GlobalInventorySummary]:
-        """Blood type အလိုက် စုစုပေါင်း Summary"""
+        """Blood type နှင့် Component အလိုက် စုစုပေါင်း Summary"""
         results = db.query(
+            GlobalInventory.blood_component, # 🟢 Component ပါ ဆွဲထုတ်ပါသည်
             GlobalInventory.blood_group,
             GlobalInventory.rh_factor,
             func.sum(GlobalInventory.quantity_ml).label('total_ml')
         ).filter(
-            GlobalInventory.quantity_ml > 0
+            GlobalInventory.quantity_ml > 0,
+            GlobalInventory.blood_component != "Whole_Blood" # 🟢 Whole Blood ကို ဖယ်ထုတ်ပါသည်
         ).group_by(
+            GlobalInventory.blood_component, # 🟢 Component ဖြင့်ပါ Group ခွဲပါသည်
             GlobalInventory.blood_group,
             GlobalInventory.rh_factor
         ).order_by(
+            GlobalInventory.blood_component,
             GlobalInventory.blood_group,
             GlobalInventory.rh_factor
         ).all()
 
         return [
             GlobalInventorySummary(
+                blood_component=row.blood_component, # 🟢 Schema ထဲသို့ Component ထည့်ပေးပါသည်
                 blood_group=row.blood_group,
                 rh_factor=row.rh_factor,
                 total_ml=row.total_ml
@@ -103,7 +112,7 @@ class GlobalInventoryService:
         ).order_by(GlobalInventory.created_at.desc()).all()
 
     @staticmethod
-    def check_stock(db: Session, blood_group: str, rh_factor: str, quantity_ml: int) -> bool:
+    def check_stock(db: Session, blood_component: str, blood_group: str, rh_factor: str, quantity_ml: int) -> bool:
         """Stock ရှိ/မရှိ စစ်ပါ"""
-        total = GlobalInventoryService.get_total_by_blood_type(db, blood_group, rh_factor)
+        total = GlobalInventoryService.get_total_by_blood_type(db, blood_component, blood_group, rh_factor)
         return total >= quantity_ml

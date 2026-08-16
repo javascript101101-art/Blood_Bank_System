@@ -3,105 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Blood Request Management</title>
+    <title>ဆေးရုံ A - သွေးတောင်းခံလွှာများ စီမံခန့်ခွဲမှု</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/requests.css">
 </head>
-<body>
+<body class="bg-animated">
+    
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🩸 Hospital A</h2>
+            <h2><i class="fas fa-tint" style="color: #dc2626;"></i> ဆေးရုံ A</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html">📊 Dashboard</a>
-            <!-- 🟢 Staff များအတွက် ဖြုတ်နိုင်ရန် ID ထည့်ထားပါသည် -->
-            <a href="donors.html" id="navDonors">👤 Donors</a>
-            <a href="inventory.html">📦 Inventory</a>
-            <a href="requests.html" class="active">📋 Requests</a>
-            <!-- 🟢 Global Request ဖြုတ်ရန် ID ထည့်ထားပါသည် -->
-            <a href="global_request.html" id="navGlobalRequest">🌐 Global Request</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html"><i class="fas fa-home"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html" id="navDonors"><i class="fas fa-users"></i> သွေးလှူရှင်များ</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်</a>
+            <a href="requests.html" class="active"><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာများ</a>
+            <a href="global_request.html" id="navGlobalRequest"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှု</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်မည်</a>
         </nav>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h1>📋 Blood Request Management</h1>
-            <button class="btn btn-primary" id="addRequestBtn">+ New Request</button>
+            <h1><i class="fas fa-clipboard-list" style="color: var(--hospital-blue); margin-right: 8px;"></i> သွေးတောင်းခံလွှာများ စီမံခန့်ခွဲမှု</h1>
+            <button class="btn btn-primary" id="addRequestBtn"><i class="fas fa-plus-circle"></i> သွေးတောင်းခံလွှာ အသစ်</button>
         </div>
 
-        <!-- Request Table -->
         <div class="card">
             <div class="card-body">
                 <table id="requestsTable">
                     <thead>
                         <tr>
-                            <th>Clinic Name</th>
-                            <th>Blood Group</th>
-                            <th>Required Date</th>
-                            <th>Quantity (Units)</th>
-                            <th>Urgency</th>
-                            <th>Status</th>
-                            <th>Requested At</th>
-                            <th>Actions</th>
+                            <th style="padding-left: 0;">ဆေးရုံအမည်</th>
+                            <th>သွေးအစိတ်အပိုင်း</th> <!-- 🟢 Table Header တွင်လည်း Component ပြသရန် -->
+                            <th>သွေးအုပ်စု</th>
+                            <th>လိုအပ်သည့်ရက်</th>
+                            <th>ပမာဏ (ယူနစ်)</th>
+                            <th>အရေးကြီးပုံ</th>
+                            <th>အခြေအနေ</th>
+                            <th>တောင်းဆိုသည့်အချိန်</th>
+                            <th style="padding-right: 0; text-align: center;">ဆောင်ရွက်ချက်</th>
                         </tr>
                     </thead>
                     <tbody id="requestsBody">
-                        <tr><td colspan="8">Loading...</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted">ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Add/Edit Request Modal -->
+    <!-- ===== Add/Edit Request Modal ===== -->
     <div id="requestModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">New Blood Request</h2>
+                <h2 id="modalTitle"><i class="fas fa-plus-circle" style="color: var(--blood-red);"></i> သွေးတောင်းခံလွှာ အသစ်</h2>
                 <span class="close">&times;</span>
             </div>
+            
             <form id="requestForm">
                 <input type="hidden" id="requestId">
                 
-                <h4 style="margin-bottom: 10px; color: #555;">🏥 CLINIC / HOSPITAL INFORMATION</h4>
+                <div class="request-section-title"><i class="fas fa-hospital"></i> ဆေးရုံ/ဆေးခန်း အချက်အလက်</div>
                 
-                <!-- 🟢 Read-Only လုပ်ထားသော Clinic Input များ (Staff အတွက် Auto ပေါ်မည်) -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="reqClinicName">Clinic Name</label>
-                        <input type="text" id="reqClinicName" readonly style="background-color: #e9ecef;">
+                        <label for="reqClinicName">ဆေးရုံအမည်</label>
+                        <input type="text" id="reqClinicName" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="reqLicense">License</label>
-                        <input type="text" id="reqLicense" readonly style="background-color: #e9ecef;">
+                        <label for="reqLicense">လိုင်စင်နံပါတ်</label>
+                        <input type="text" id="reqLicense" readonly>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="reqContactPhone">Contact Phone</label>
-                        <input type="text" id="reqContactPhone" readonly style="background-color: #e9ecef;">
+                        <label for="reqContactPhone">ဆက်သွယ်ရန် ဖုန်းနံပါတ်</label>
+                        <input type="text" id="reqContactPhone" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="reqContactEmail">Contact Email</label>
-                        <input type="email" id="reqContactEmail" readonly style="background-color: #e9ecef;">
+                        <label for="reqContactEmail">ဆက်သွယ်ရန် အီးမေးလ်</label>
+                        <input type="email" id="reqContactEmail" readonly>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="reqClinicAddress">Clinic Address</label>
-                    <input type="text" id="reqClinicAddress" readonly style="background-color: #e9ecef;">
+                    <label for="reqClinicAddress">ဆေးရုံလိပ်စာ</label>
+                    <input type="text" id="reqClinicAddress" readonly>
                 </div>
 
-                <h4 style="margin-bottom: 10px; margin-top: 20px; color: #555;">🩸 BLOOD REQUEST DETAILS</h4>
+                <div class="request-section-title"><i class="fas fa-tint"></i> သွေးတောင်းခံမှု အသေးစိတ်</div>
+
+                <!-- 🟢 🆕 သွေးအစိတ်အပိုင်း (Blood Component) ရွေးချယ်ရန် Field အသစ် (Whole Blood မပါပါ) -->
+                <div class="form-group">
+                    <label for="reqBloodComponent">သွေးအစိတ်အပိုင်း (Blood Component) <span style="color: #dc2626;">*</span></label>
+                    <select id="reqBloodComponent" required class="form-control">
+                        <option value="" disabled selected>သွေးအစိတ်အပိုင်း ရွေးပါ</option>
+                        <option value="Red_Cells">Red Cells (သွေးနီဥ)</option>
+                        <option value="Plasma">Plasma (သွေးရည်ကြည်)</option>
+                        <option value="Platelets">Platelets (သွေးဥမွှား)</option>
+                    </select>
+                </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="reqBloodGroup">Blood Group *</label>
+                        <label for="reqBloodGroup">သွေးအုပ်စု <span style="color: #dc2626;">*</span></label>
                         <select id="reqBloodGroup" required>
-                            <option value="">Select Blood Group</option>
+                            <option value="">သွေးအုပ်စု ရွေးပါ</option>
                             <option value="A Positive">A Positive</option>
                             <option value="A Negative">A Negative</option>
                             <option value="B Positive">B Positive</option>
@@ -113,43 +127,46 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="reqQuantity">Quantity (Units) *</label>
-                        <input type="number" id="reqQuantity" min="1" required placeholder="e.g. 2">
+                        <label for="reqQuantity">ပမာဏ (ယူနစ်) <span style="color: #dc2626;">*</span></label>
+                        <input type="number" id="reqQuantity" min="1" required placeholder="ဥပမာ - 2">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="reqUrgency">Urgency Level *</label>
+                        <label for="reqUrgency">အရေးကြီးအဆင့် <span style="color: #dc2626;">*</span></label>
                         <select id="reqUrgency" required>
-                            <option value="Normal Request">Normal Request</option>
-                            <option value="Urgent">Urgent</option>
-                            <option value="Critical">Critical</option>
+                            <option value="Normal Request">သာမန်တောင်းခံမှု (Normal)</option>
+                            <option value="Urgent">အရေးပေါ် (Urgent)</option>
+                            <option value="Critical">အရေးကြီးဆုံး (Critical)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="reqRequiredDate">Required Date *</label>
+                        <label for="reqRequiredDate">လိုအပ်သည့်ရက် <span style="color: #dc2626;">*</span></label>
                         <input type="date" id="reqRequiredDate" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="reqPatientCondition">Patient Condition / Reason</label>
-                    <textarea id="reqPatientCondition" rows="3" placeholder="Brief explanation of patient condition or requirement..."></textarea>
+                    <label for="reqPatientCondition">လူနာ၏ အခြေအနေ / အကြောင်းပြချက်</label>
+                    <textarea id="reqPatientCondition" rows="3" placeholder="လူနာအခြေအနေ သို့မဟုတ် လိုအပ်ချက် အကျဉ်းချုပ်..."></textarea>
                 </div>
 
-                <!-- Admin အတွက် Status Dropdown -->
                 <div class="form-group" id="statusGroup">
-                    <label for="reqStatus">Status</label>
+                    <label for="reqStatus">အခြေအနေ</label>
                     <select id="reqStatus">
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Fulfilled">Fulfilled</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="Pending">ဆိုင်းငံ့ဆဲ (Pending)</option>
+                        <option value="Approved">အတည်ပြုပြီး (Approved)</option>
+                        <option value="Fulfilled">ပြီးမြောက်ပြီ (Fulfilled)</option>
+                        <option value="Rejected">ပယ်ချသည် (Rejected)</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block">Submit Blood Request</button>
+                <div class="request-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> သွေးတောင်းခံလွှာ တင်သွင်းမည်</button>
+                    <button type="button" class="btn btn-secondary-outline close">ပယ်ဖျက်မည်</button>
+                </div>
+
                 <div id="requestFormError" class="error-message" style="display:none;"></div>
             </form>
         </div>
@@ -158,5 +175,38 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/requests.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('requestModal');
+            const closeBtns = document.querySelectorAll('.close');
+            closeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    modal.classList.remove('show');
+                });
+            });
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+
+            try {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    const role = user.role || 'Hospital_Admin';
+                    if (role !== 'Clinic') {
+                        const addBtn = document.getElementById('addRequestBtn');
+                        if (addBtn) addBtn.style.display = 'none';
+                        const statusGroup = document.getElementById('statusGroup');
+                        if (statusGroup) statusGroup.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.warn('Role check failed:', e);
+            }
+        });
+    </script>
 </body>
 </html>

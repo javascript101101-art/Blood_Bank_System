@@ -7,6 +7,7 @@ from app.middleware.auth_middleware import get_current_active_user, role_require
 from app.models.user import User
 from app.services.donor_service import DonorService
 from app.schemas.donor_schema import DonorCreate, DonorUpdate, DonorResponse
+from app.schemas.inventory_schema import InventoryResponse # 🟢 History အတွက် ထပ်မံ Import လုပ်ထားပါသည်
 
 router = APIRouter(prefix="/donors", tags=["Donors"])
 
@@ -26,6 +27,18 @@ def get_donors(
 ):
     """သွေးလှူရှင်အားလုံး ကြည့်ရန်"""
     return DonorService.get_donors(db, current_user.hospital_id)
+
+# ============================================
+# 🆕 Get Donor History Endpoint (Traceability)
+# ============================================
+@router.get("/{donor_id}/history", response_model=List[InventoryResponse])
+def get_donor_history(
+    donor_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """အလှူရှင်တစ်ဦးချင်းစီ၏ သွေးလှူဒါန်းမှု မှတ်တမ်း (Traceability) ကို ကြည့်ရန်"""
+    return DonorService.get_donor_history(db, donor_id, current_user.hospital_id)
 
 @router.get("/{donor_id}", response_model=DonorResponse)
 def get_donor(

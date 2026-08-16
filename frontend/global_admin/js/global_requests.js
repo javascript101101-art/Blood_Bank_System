@@ -21,7 +21,8 @@ async function loadRequests() {
         return;
     }
     
-    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+    // 🟢 ကော်လံ ၉ ခုဖြစ်သွားသဖြင့် colspan="9" သို့ ပြောင်းထားပါသည်
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
 
     try {
         console.log('📡 Fetching /global-requests/');
@@ -30,7 +31,7 @@ async function loadRequests() {
 
         if (!result) {
             console.error('❌ Result is null or undefined');
-            tbody.innerHTML = '<tr><td colspan="8">Error: No response from server</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error: No response from server</td></tr>';
             return;
         }
 
@@ -38,7 +39,7 @@ async function loadRequests() {
             console.log('✅ Data received:', result.data.length, 'items');
             
             if (result.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8">No global requests found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">No global requests found.</td></tr>';
                 return;
             }
 
@@ -76,11 +77,16 @@ async function loadRequests() {
                     actions = `<span class="status-badge status-rejected" style="color: red;">❌ Rejected</span>`;
                 }
 
+                // 🆕 Component အမည်ကို ယူပြီး လှပအောင် ပြင်ဆင်ခြင်း
+                const componentDisplay = req.blood_component ? req.blood_component.replace('_', ' ') : 'Whole Blood';
+
                 html += `
                     <tr>
                         <td>${req.requesting_hospital_id || 'Unknown'}</td>
                         <td><span class="badge">${req.blood_group}</span></td>
                         <td>${req.rh_factor}</td>
+                        <!-- 🆕 Component ကို ပြသရန် အကွက်အသစ် ထည့်သွင်းထားပါသည် -->
+                        <td><span class="badge" style="background-color: #e2e8f0; color: #475569;">${componentDisplay}</span></td>
                         <td>${req.quantity_ml} ml</td>
                         <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
                         <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
@@ -94,11 +100,11 @@ async function loadRequests() {
             
         } else {
             console.error('❌ Failed to load requests:', result);
-            tbody.innerHTML = '<tr><td colspan="8">Error loading requests.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error loading requests.</td></tr>';
         }
     } catch (error) {
         console.error('❌ Error loading requests:', error);
-        tbody.innerHTML = '<tr><td colspan="8">Error loading requests: ' + error.message + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error loading requests: ' + error.message + '</td></tr>';
     }
 }
 
@@ -112,7 +118,7 @@ async function approveFromGlobal(id) {
         const result = await apiRequest(`/global-requests/${id}`, {
             method: 'PUT',
             body: JSON.stringify({ 
-                status: 'Fulfilled',
+                status: 'SUPPLIER_FULFILLED', // 🟢 Backend နှင့် ကိုက်ညီအောင် 'SUPPLIER_FULFILLED' သို့ ပြောင်းထားပါသည်
                 assigned_hospital_id: null
             })
         });

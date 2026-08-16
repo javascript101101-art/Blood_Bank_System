@@ -77,6 +77,7 @@ class GlobalRequestService:
                     db=db,
                     blood_group=request.blood_group,
                     rh_factor=request.rh_factor,
+                    blood_component=request.blood_component, # 🟢 Component ပါ ထည့်ပေးလိုက်ပါသည်
                     quantity_ml=request.quantity_ml
                 )
                 if not removed:
@@ -157,11 +158,13 @@ class GlobalRequestService:
         
         summary = {}
         for inv in inventories:
-            key = f"{inv.blood_group}_{inv.rh_factor}"
+            # 🟢 Component ကိုပါ key တွင် ပေါင်းထည့်ထားပါသည်
+            key = f"{inv.blood_group}_{inv.rh_factor}_{getattr(inv, 'blood_component', 'Whole_Blood')}"
             if key not in summary:
                 summary[key] = {
                     "blood_group": inv.blood_group,
                     "rh_factor": inv.rh_factor,
+                    "blood_component": getattr(inv, 'blood_component', 'Whole_Blood'), # 🟢
                     "quantity_ml": 0
                 }
             summary[key]["quantity_ml"] += inv.quantity_ml
@@ -182,11 +185,13 @@ class GlobalRequestService:
             if inventories:
                 summary = {}
                 for inv in inventories:
-                    key = f"{inv.blood_group}_{inv.rh_factor}"
+                    # 🟢 Component ကိုပါ key တွင် ပေါင်းထည့်ထားပါသည်
+                    key = f"{inv.blood_group}_{inv.rh_factor}_{getattr(inv, 'blood_component', 'Whole_Blood')}"
                     if key not in summary:
                         summary[key] = {
                             "blood_group": inv.blood_group,
                             "rh_factor": inv.rh_factor,
+                            "blood_component": getattr(inv, 'blood_component', 'Whole_Blood'), # 🟢
                             "quantity_ml": 0
                         }
                     summary[key]["quantity_ml"] += inv.quantity_ml

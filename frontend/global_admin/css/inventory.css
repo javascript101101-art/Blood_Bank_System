@@ -1,0 +1,205 @@
+/* ============================================================
+   GLOBAL ADMIN INVENTORY PAGE SPECIFIC STYLES
+   ============================================================ */
+
+/* ===== Inventory Section Headers ===== */
+.inventory-section-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 30px;
+}
+.inventory-section-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.inventory-section-card .card-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.global-stock-header { border-top: 4px solid var(--medical-cyan); }
+.hospital-stock-header { border-top: 4px solid var(--hospital-blue); }
+
+/* ===== Filters Section ===== */
+.filters-section {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.filters-section .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+}
+.filters-section select {
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: #ffffff;
+    font-size: 14px;
+    outline: none;
+    min-width: 150px;
+    font-family: inherit;
+}
+.filters-section select:hover,
+.filters-section select:focus {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--medical-cyan);
+}
+.filters-section select option {
+    background: #0a0b1e;
+    color: #ffffff;
+}
+
+/* 🟢 Filters Buttons (Align & Height equal) */
+.filters-section .btn {
+    padding: 8px 18px;
+    border-radius: 50px !important;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    margin: 0;
+}
+.filters-section .btn-primary {
+    background: var(--medical-cyan);
+    color: #0a0b1e;
+    border-color: var(--medical-cyan);
+}
+.filters-section .btn-primary:hover {
+    background: #0099c9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3);
+}
+.filters-section .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.filters-section .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Modal (Dark Glassmorphism) ===== */
+/* Note: We keep display: none for initial state to respect the original JS inline style hiding/showing */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 11, 30, 0.7);
+    backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    border-radius: var(--radius-lg);
+    width: 420px;
+    max-width: 95%;
+    padding: 24px;
+    color: #ffffff;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #ffffff;
+}
+.close-btn {
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: normal;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    transition: color 0.2s;
+}
+.close-btn:hover { color: #ffffff; }
+
+.modal .form-group { margin-bottom: 16px; }
+.modal .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+}
+.modal .form-group select,
+.modal .form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: #ffffff;
+    font-size: 14px;
+    transition: border 0.2s;
+    font-family: inherit;
+}
+.modal .form-group select:focus,
+.modal .form-group input:focus {
+    outline: none;
+    border-color: var(--medical-cyan);
+    background: rgba(255,255,255,0.1);
+}
+.modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.modal .btn {
+    padding: 10px 24px;
+    border-radius: 50px !important;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.modal .btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.modal .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+.modal .btn-success {
+    background: var(--medical-cyan);
+    color: #0a0b1e;
+}
+.modal .btn-success:hover { opacity: 0.9; transform: translateY(-2px); }
+
+/* ===== Table Headers Styling ===== */
+table th {
+    color: #ffffff;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}

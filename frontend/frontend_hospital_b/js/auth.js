@@ -1,5 +1,5 @@
 // ============================================
-// Login
+// Login & General App Startup
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
@@ -23,6 +23,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     displayUserInfo();
+
+    // ============================================
+    // 🟢 Staff (Clinic) Portal UI Control
+    // ============================================
+    const user = getUser();
+    const role = user?.role || 'Hospital_Admin';
+
+    // 🟢 ဤနေရာတွင် Clinic ဟု ပြောင်းထားပါသည်
+    if (role === 'Clinic') {
+        
+        // ၁။ Sidebar မှ Donors မီနူးကို ဖျောက်မည်
+        const donorsMenu = document.getElementById('navDonors');
+        if (donorsMenu) donorsMenu.style.display = 'none';
+
+        // ၂။ 🆕 Sidebar မှ Global Request မီနူးကို ဖျောက်မည်
+        const globalRequestMenu = document.getElementById('navGlobalRequest');
+        if (globalRequestMenu) globalRequestMenu.style.display = 'none';
+
+        // ၃။ Sidebar Header ကို "Clinic Portal" ဟု ပြောင်းမည်
+        const sidebarHeader = document.querySelector('.sidebar-header h2');
+        if (sidebarHeader) sidebarHeader.textContent = '🏥 Clinic Portal';
+
+        // ၄။ Dashboard ရှိ Admin သီးသန့် Approve လုပ်မည့် Section ကို ဖျောက်မည်
+        const adminApprovalSec = document.getElementById('adminApprovalSection');
+        if (adminApprovalSec) adminApprovalSec.style.display = 'none';
+
+        // ၅။ Inventory Page ရှိ "+ Add Inventory" ခလုတ်ကို ဖျောက်မည်
+        const addInventoryBtn = document.getElementById('addInventoryBtn');
+        if (addInventoryBtn) addInventoryBtn.style.display = 'none';
+
+        // ၆။ 🆕 Dashboard ပေါ်ရှိ Donors နှင့်သက်ဆိုင်သော အပိုင်းများကို ဖျောက်မည်
+        const totalDonorsCard = document.getElementById('totalDonors');
+        if (totalDonorsCard) totalDonorsCard.closest('.stat-card').style.display = 'none';
+
+        const recentDonorsTable = document.getElementById('recentDonorsTable');
+        if (recentDonorsTable) recentDonorsTable.closest('.recent-section').style.display = 'none';
+    }
 });
 
 async function handleLogin(e) {
@@ -69,16 +106,24 @@ async function handleLogin(e) {
 }
 
 // ============================================
-// 🆕 Register
+// 🆕 Register (Clinic Data ပါဝင်အောင် ပြင်ဆင်ထားသည်)
 // ============================================
 async function handleRegister(e) {
     e.preventDefault();
     
+    // User Data
     const username = document.getElementById('username').value;
     const full_name = document.getElementById('full_name').value;
     const password = document.getElementById('password').value;
     const confirm_password = document.getElementById('confirm_password').value;
     const role = document.getElementById('role').value;
+
+    // 🏥 Clinic Data
+    const clinic_name = document.getElementById('regClinicName') ? document.getElementById('regClinicName').value : null;
+    const license = document.getElementById('regLicense') ? document.getElementById('regLicense').value : null;
+    const contact_phone = document.getElementById('regContactPhone') ? document.getElementById('regContactPhone').value : null;
+    const contact_email = document.getElementById('regContactEmail') ? document.getElementById('regContactEmail').value : null;
+    const clinic_address = document.getElementById('regClinicAddress') ? document.getElementById('regClinicAddress').value : null;
     
     const errorEl = document.getElementById('registerError');
     const successEl = document.getElementById('registerSuccess');
@@ -108,7 +153,13 @@ async function handleRegister(e) {
                 username: username,
                 full_name: full_name,
                 password: password,
-                role: role
+                role: role,
+                // 🟢 API သို့ Clinic Data များ တွဲပို့ပေးခြင်း
+                clinic_name: clinic_name,
+                license: license,
+                contact_phone: contact_phone,
+                contact_email: contact_email,
+                clinic_address: clinic_address
             })
         });
 
@@ -141,6 +192,6 @@ function displayUserInfo() {
         const nameEl = document.getElementById('userName');
         const roleEl = document.getElementById('userRole');
         if (nameEl) nameEl.textContent = user.id ? 'User' : 'User';
-        if (roleEl) roleEl.textContent = user.role || 'Staff';
+        if (roleEl) roleEl.textContent = user.role || 'Clinic';
     }
 }

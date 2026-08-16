@@ -1,7 +1,8 @@
 // ============================================
-// Inventory Management
+// Inventory Management (UPDATED with Splitting Logic & Traceability)
 // ============================================
 let editingInventoryId = null;
+let currentEditingComponent = "Whole_Blood"; // 🟢 Edit လုပ်နေသော သွေးအမျိုးအစားကို မှတ်သားထားရန်
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!isAuthenticated()) {
@@ -35,39 +36,65 @@ async function loadInventory() {
     const tbody = document.getElementById('inventoryBody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Loading...</td></tr>';
 
     try {
         const result = await apiRequest('/inventory/', { method: 'GET' });
         
         if (result && result.status === 200 && result.data) {
             if (result.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No inventory records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No inventory records found.</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = result.data.map(item => `
-                <tr>
-                    <td><strong>${item.blood_group}</strong></td>
-                    <td>${item.rh_factor}</td>
-                    <td>${item.quantity_ml}</td>
-                    <td>${formatDate(item.expiry_date)}</td>
-                    <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="editInventory('${item.id}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteInventory('${item.id}')">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = result.data.map(item => {
+                // History Column
+                let historyHtml = '<span style="color: #94a3b8;">-</span>';
+                if (item.status === 'Used' && item.blood_request_id) {
+                    const shortReqId = item.blood_request_id.substring(0, 8).toUpperCase();
+                    historyHtml = `<span class="badge" style="background:#e2e8f0; color:#475569; font-size:11px; padding: 4px 6px; border-radius: 4px;" title="Request ID: ${item.blood_request_id}">REQ: ${shortReqId}</span>`;
+                }
+
+                // Donor Column
+                let donorHtml = '<span style="color: #94a3b8;">-</span>';
+                if (item.donor_id) {
+                    const shortDonorId = item.donor_id.substring(0, 8).toUpperCase();
+                    donorHtml = `<span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:11px; padding: 4px 6px; border-radius: 4px;" title="Donor ID: ${item.donor_id}">DNR: ${shortDonorId}</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td>${donorHtml}</td>
+                        <td><strong>${item.blood_group}</strong></td>
+                        <td>${item.rh_factor}</td>
+                        <td><span class="badge" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${item.blood_component || 'Whole_Blood'}</span></td>
+                        <td>${item.quantity_ml}</td>
+                        <td>${formatDate(item.expiry_date)}</td>
+                        <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
+                        <td>${historyHtml}</td>
+                        <td>
+                            ${item.status === 'Quarantined' ? 
+                                `<button class="btn btn-info btn-sm" onclick="openSplitModal('${item.id}', ${item.quantity_ml})" title="သွေးခွဲထုတ်မည်">⚗️</button>` 
+                                : ''
+                            }
+                            ${item.status === 'Used' ? 
+                                '' 
+                                : `<button class="btn btn-warning btn-sm" onclick="editInventory('${item.id}')">✏️</button>
+                                   <button class="btn btn-danger btn-sm" onclick="deleteInventory('${item.id}')">🗑️</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="6">Error loading inventory.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error loading inventory.</td></tr>';
         console.error('Error loading inventory:', error);
     }
 }
 
 // ============================================
-// Open/Close Modal
+// Open/Close Inventory Modal
 // ============================================
 function openInventoryModal(inventoryData = null) {
     const modal = document.getElementById('inventoryModal');
@@ -78,6 +105,7 @@ function openInventoryModal(inventoryData = null) {
     errorEl.style.display = 'none';
     form.reset();
     editingInventoryId = null;
+    currentEditingComponent = "Whole_Blood"; // Default reset
 
     if (inventoryData) {
         title.textContent = 'Edit Inventory';
@@ -87,7 +115,10 @@ function openInventoryModal(inventoryData = null) {
         document.getElementById('invQuantity').value = inventoryData.quantity_ml;
         document.getElementById('invExpiryDate').value = inventoryData.expiry_date;
         document.getElementById('invStatus').value = inventoryData.status;
+        
         editingInventoryId = inventoryData.id;
+        // 🟢 Edit လုပ်ချိန်တွင် မူလ Component အမည်ကို မှတ်သားထားပါသည်
+        currentEditingComponent = inventoryData.blood_component || "Whole_Blood"; 
     } else {
         title.textContent = 'Add New Inventory';
         document.getElementById('invStatus').value = 'Available';
@@ -101,10 +132,11 @@ function closeInventoryModal() {
     document.getElementById('inventoryForm').reset();
     document.getElementById('inventoryFormError').style.display = 'none';
     editingInventoryId = null;
+    currentEditingComponent = "Whole_Blood";
 }
 
 // ============================================
-// Edit Inventory
+// Edit & Delete Inventory
 // ============================================
 async function editInventory(id) {
     try {
@@ -117,9 +149,6 @@ async function editInventory(id) {
     }
 }
 
-// ============================================
-// Delete Inventory
-// ============================================
 async function deleteInventory(id) {
     if (!confirm('Are you sure you want to delete this inventory record?')) return;
 
@@ -136,7 +165,7 @@ async function deleteInventory(id) {
 }
 
 // ============================================
-// Handle Form Submit
+// Handle Inventory Form Submit
 // ============================================
 async function handleInventorySubmit(e) {
     e.preventDefault();
@@ -149,10 +178,10 @@ async function handleInventorySubmit(e) {
         rh_factor: document.getElementById('invRhFactor').value,
         quantity_ml: parseInt(document.getElementById('invQuantity').value),
         expiry_date: document.getElementById('invExpiryDate').value,
-        status: document.getElementById('invStatus').value
+        status: document.getElementById('invStatus').value,
+        blood_component: currentEditingComponent // 🟢 မှတ်သားထားသော မူလ Component ကိုသာ ပြန်ပို့ပေးပါမည်
     };
 
-    // Validation
     if (!inventoryData.blood_group || !inventoryData.rh_factor) {
         errorEl.textContent = 'Blood group and Rh factor are required.';
         errorEl.style.display = 'block';
@@ -185,6 +214,82 @@ async function handleInventorySubmit(e) {
         errorEl.style.display = 'block';
     }
 }
+
+// ============================================
+// Component Splitting Logic 
+// ============================================
+let splittingInvId = null;
+
+function openSplitModal(id, originalMl) {
+    const modal = document.getElementById('splitModal');
+    const errorEl = document.getElementById('splitFormError');
+    
+    errorEl.style.display = 'none';
+    document.getElementById('splitForm').reset();
+    
+    splittingInvId = id;
+    document.getElementById('splitInvId').value = id;
+    document.getElementById('originalQuantityDisplay').textContent = originalMl;
+    
+    modal.classList.add('show');
+}
+
+document.querySelectorAll('.split-close').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('splitModal').classList.remove('show');
+    });
+});
+
+document.getElementById('splitForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const errorEl = document.getElementById('splitFormError');
+    errorEl.style.display = 'none';
+
+    const redCells = parseInt(document.getElementById('splitRedCells').value) || 0;
+    const plasma = parseInt(document.getElementById('splitPlasma').value) || 0;
+    const platelets = parseInt(document.getElementById('splitPlatelets').value) || 0;
+
+    const originalMl = parseInt(document.getElementById('originalQuantityDisplay').textContent);
+    const totalSplit = redCells + plasma + platelets;
+
+    if (totalSplit > originalMl) {
+        errorEl.textContent = `ခွဲထုတ်မည့် စုစုပေါင်းပမာဏ (${totalSplit}ml) သည် မူလပမာဏ (${originalMl}ml) ထက် ကျော်လွန်နေပါသည်။`;
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    if (totalSplit === 0) {
+        errorEl.textContent = "အနည်းဆုံး သွေးအစိတ်အပိုင်း တစ်ခုခုကို ခွဲထုတ်ပါ။";
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    const splitData = {
+        red_cells_ml: redCells,
+        plasma_ml: plasma,
+        platelets_ml: platelets
+    };
+
+    try {
+        const result = await apiRequest(`/inventory/${splittingInvId}/split`, {
+            method: 'POST',
+            body: JSON.stringify(splitData)
+        });
+
+        if (result && (result.status === 200 || result.status === 201)) {
+            document.getElementById('splitModal').classList.remove('show');
+            loadInventory();
+            alert("သွေးအစိတ်အပိုင်းများ အောင်မြင်စွာ ခွဲထုတ်ပြီးပါပြီ။");
+        } else {
+            errorEl.textContent = result?.data?.detail || 'Error splitting inventory.';
+            errorEl.style.display = 'block';
+        }
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        errorEl.style.display = 'block';
+    }
+});
 
 // ============================================
 // Utility Functions

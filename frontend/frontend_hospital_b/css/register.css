@@ -1,0 +1,148 @@
+/* ============================================================
+   REGISTER PAGE FORM UI STYLES (ULTRA COMPACT & FULLY RESPONSIVE)
+   ============================================================ */
+
+/* ===== Container & Glass Card ===== */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+    width: 100%;
+}
+.register-box {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    width: 100%;
+    max-width: 540px; /* အရင်က 580px ကနေ ပိုမိုကျစ်လျစ်အောင် 540px လျှော့ချ */
+    padding: 20px 16px; /* Card အနားသားကို ပိုမိုသေးငယ်အောင် */
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: slideDown 0.4s ease;
+}
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.register-header { text-align: center; margin-bottom: 14px; }
+.register-header h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.register-header p { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+
+/* ===== 2-Column Sections (ဘယ်တော့မှ ပြိုကွဲမသွားအောင်) ===== */
+.register-sections-wrapper {
+    display: flex;
+    gap: 16px;
+    flex-wrap: nowrap; /* 🟢 Desktop/Tablet အားလုံးမှာ ဘေးချင်းကပ် ၂ တိုင်ဖြစ်နေအောင် သေချာပိတ်ထားပါတယ် */
+}
+.register-section {
+    flex: 1; /* အကျယ်ကို 50% စီ ညီမျှစွာ ခွဲယူပါမယ် */
+}
+
+/* ===== Mobile မှာ 1 Column ဖြစ်အောင် ===== */
+@media (max-width: 768px) {
+    .register-sections-wrapper { flex-wrap: wrap; flex-direction: column; gap: 0; }
+    .register-section { width: 100%; }
+}
+
+/* ===== Section Titles ===== */
+.register-section .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.register-section .section-title i { color: var(--blood-red); }
+
+/* ===== Form Inputs (ပိုမိုသေးငယ်ပြီး အနက်ရောင်ဘောင်ပြဿနာ အပြီးအပိုင် ဖြေရှင်းထားပါတယ်) ===== */
+.form-group { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 2px; 
+    margin-bottom: 6px; /* အကွက်အကြားအကွာအဝေးကို 8px ကနေ 6px လျှော့ချ */
+}
+.form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.form-group label .required { color: #dc2626; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 6px 10px; /* Input တွေကို ပိုမိုပါးလျအောင် */
+    border: 1px solid #d1d5db !important; /* 🟢 အနက်ရောင်ဘောင်အစား သန့်ရှင်းသော မီးခိုးရောင်ဘောင် */
+    border-radius: var(--radius-md) !important;
+    font-size: 13px;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    width: 100%;
+    outline: none !important;
+    box-shadow: none !important; /* နောက်ခံအရိပ်များကို ရှင်းထုတ် */
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--hospital-blue) !important;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.15);
+}
+.form-group textarea { resize: vertical; min-height: 40px; }
+
+/* ===== Register Button (ချုံ့ပြီး ခေတ်မီအောင်) ===== */
+.btn-block {
+    width: 100%;
+    padding: 8px; /* Button အမြင့်ကို လျှော့ချ */
+    border-radius: 50px !important;
+    background: var(--hospital-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+.btn-block:hover {
+    background: var(--hospital-blue-dark) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(15, 76, 117, 0.25);
+}
+
+/* ===== Messages ===== */
+.error-message, .success-message {
+    padding: 6px 10px; 
+    border-radius: var(--radius-md); 
+    font-size: 12px; 
+    text-align: center; 
+    margin-top: 6px;
+}
+.error-message { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.success-message { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+
+/* ===== Login Footer Link ===== */
+.footer-link { 
+    text-align: center; 
+    margin-top: 10px; 
+    font-size: 12px; 
+    color: var(--text-primary) !important; 
+}
+.footer-link a { 
+    color: var(--hospital-blue) !important; 
+    font-weight: 700; 
+    text-decoration: none; 
+    border-bottom: 1px solid var(--hospital-blue); 
+}
+.footer-link a:hover { 
+    color: var(--hospital-blue-dark) !important; 
+    border-bottom-color: var(--hospital-blue-dark);
+}
+
+/* ===== Responsive Mobile ===== */
+@media (max-width: 480px) {
+    .register-box { padding: 14px; max-width: 100%; }
+}

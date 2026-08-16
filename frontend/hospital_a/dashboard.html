@@ -3,147 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital A - Dashboard</title>
+    <title>ဆေးရုံ A - ပင်မစာမျက်နှာ</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/style.css">
-    <!-- 🟢 🆕 Low Stock Warning အတွက် CSS Style -->
-    <style>
-        .alert-warning {
-            background-color: #ffcccc;
-            color: #cc0000;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 5px solid #cc0000;
-            border-radius: 4px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-        }
-        .alert-warning span.icon {
-            font-size: 1.2em;
-            margin-right: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
-<body>
-    <!-- Sidebar -->
+<body class="bg-animated">
+    
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🩸 Hospital A</h2>
+            <h2><i class="fas fa-tint" style="color: #dc2626;"></i> ဆေးရုံ A</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="active">📊 Dashboard</a>
-            <!-- 🟢 Staff များအတွက် ဖြုတ်နိုင်ရန် ID ထည့်ထားပါသည် -->
-            <a href="donors.html" id="navDonors">👤 Donors</a>
-            <a href="inventory.html">📦 Inventory</a>
-            <a href="requests.html">📋 Requests</a>
-            <!-- 🟢 Global Request ဖြုတ်ရန် ID ထည့်ထားပါသည် -->
-            <a href="global_request.html" id="navGlobalRequest">🌐 Global Request</a>
-            <a href="#" id="logoutBtn">🚪 Logout</a>
+            <a href="dashboard.html" class="active"><i class="fas fa-home"></i> ပင်မစာမျက်နှာ</a>
+            <a href="donors.html" id="navDonors"><i class="fas fa-users"></i> သွေးလှူရှင်များ</a>
+            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်</a>
+            <a href="requests.html"><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာများ</a>
+            <a href="global_request.html" id="navGlobalRequest"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှု</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်မည်</a>
         </nav>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h1>Dashboard</h1>
+            <h1><i class="fas fa-hospital" style="color: var(--hospital-blue); margin-right: 8px;"></i> ပင်မစာမျက်နှာ</h1>
             <div class="user-info">
-                <span id="userName">Admin</span>
-                <span class="badge" id="userRole">Hospital_Admin</span>
+                <div class="user-avatar"><i class="fas fa-user-md"></i></div>
+                <div>
+                    <span id="userName">User</span>
+                    <span class="badge" id="userRole">HOSPITAL_ADMIN</span>
+                </div>
             </div>
         </div>
 
-        <!-- 🔴 🆕 Low Stock Warning Section -->
-        <div id="lowStockAlertsContainer"></div>
+        <!-- 🔴 Low Stock Warning Section (Clinic အတွက် ဖျောက်မည်) -->
+        <div id="lowStockAlertsContainer" style="margin-bottom: 16px;"></div>
 
         <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">👤</div>
+                <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
                 <div class="stat-info">
                     <h3 id="totalDonors">0</h3>
-                    <p>Total Donors</p>
+                    <p>စုစုပေါင်း အလှူရှင်</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📦</div>
+                <div class="stat-icon"><i class="fas fa-box-open"></i></div>
                 <div class="stat-info">
                     <h3 id="totalInventory">0</h3>
-                    <p>Inventory Items</p>
+                    <p>လက်ကျန် သွေးအိတ်များ</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📋</div>
+                <div class="stat-icon"><i class="fas fa-tasks"></i></div>
                 <div class="stat-info">
                     <h3 id="totalRequests">0</h3>
-                    <p>Total Requests</p>
+                    <p>စုစုပေါင်း တောင်းခံမှု</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🔄</div>
+                <div class="stat-icon"><i class="fas fa-sync"></i></div>
                 <div class="stat-info">
                     <h3 id="pendingSync">0</h3>
-                    <p>Pending Sync</p>
+                    <p>ချိတ်ဆက်ရန် ကျန်ရှိ</p>
                 </div>
             </div>
         </div>
 
-        <!-- Sync Section -->
-        <div class="sync-section" style="margin-bottom: 20px;">
-            <div class="card">
-                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                    <div>
-                        <span id="syncStatusMsg" style="font-weight: 600;">⏳ Loading sync status...</span>
-                        <span id="lastSyncTime" style="color: #888; font-size: 14px; margin-left: 16px;"></span>
-                    </div>
-                    <button id="syncBtn" class="btn btn-primary">🔄 Sync Now</button>
+        <!-- Sync Bar Section (Clinic အတွက် ဖျောက်မည်) -->
+        <div class="sync-section">
+            <div class="sync-bar-container">
+                <div class="sync-left-wrapper">
+                    <span id="syncStatusMsg" style="font-weight: 600;">ဒေတာချိတ်ဆက်မှုကို စစ်ဆေးနေသည်...</span>
+                    <span id="lastSyncTime" class="sync-time">--:-- --:--</span>
                 </div>
+                <button id="syncBtn" class="btn btn-primary"><i class="fas fa-sync-alt"></i> ယခု ချိတ်ဆက်မည်</button>
             </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recent Donors Section -->
         <div class="recent-section">
             <div class="card">
                 <div class="card-header">
-                    <h3>Recent Donors</h3>
-                    <a href="donors.html">View All →</a>
+                    <h3><i class="fas fa-history" style="color: var(--hospital-blue); margin-right: 6px;"></i> နောက်ဆုံး လှူဒါန်းထားသူများ</h3>
+                    <a href="donors.html">အားလုံး ကြည့်ရန် <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="card-body">
                     <table id="recentDonorsTable">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Blood Group</th>
-                                <th>Contact</th>
+                                <th style="padding-left: 0;">အမည်</th>
+                                <th>သွေးအုပ်စု</th>
+                                <th style="padding-right: 0;">ဖုန်းနံပါတ်</th>
                             </tr>
                         </thead>
                         <tbody id="recentDonorsBody">
-                            <tr><td colspan="3">Loading...</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted">ဒေတာ ရယူနေသည်...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- 🆕 User Management Section (Pending Staff Approvals) -->
-        <div class="user-management-section" id="adminApprovalSection" style="margin-top: 30px;">
+        <!-- User Management Section -->
+        <div class="user-management-section" id="adminApprovalSection">
             <div class="card">
                 <div class="card-header">
-                    <h3>👥 Pending Staff Approvals</h3>
-                    <span id="pendingCount" class="badge" style="background: #f39c12; color: white; padding: 4px 12px;">0</span>
+                    <h3><i class="fas fa-user-check" style="color: var(--hospital-blue); margin-right: 6px;"></i> အတည်ပြုရန် စောင့်ဆိုင်းနေသော ဝန်ထမ်းများ</h3>
+                    <span id="pendingCount" class="badge" style="background: #f59e0b; color: white; padding: 3px 10px;">0</span>
                 </div>
                 <div class="card-body">
                     <table id="pendingUsersTable">
                         <thead>
                             <tr>
-                                <th>Username</th>
-                                <th>Full Name</th>
-                                <th>Role</th>
-                                <th>Requested At</th>
-                                <th>Actions</th>
+                                <th style="padding-left: 0;">အသုံးပြုသူအမည်</th>
+                                <th>အမည်အပြည့်အစုံ</th>
+                                <th>ရာထူး</th>
+                                <th>တောင်းဆိုသည့်အချိန်</th>
+                                <th style="padding-right: 0; text-align: center;">ဆောင်ရွက်ချက်</th>
                             </tr>
                         </thead>
                         <tbody id="pendingUsersBody">
-                            <tr><td colspan="5">Loading...</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted">ဒေတာ ရယူနေသည်...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -151,8 +136,33 @@
         </div>
     </div>
 
+    <!-- JS Scripts (မူရင်းအတိုင်း) -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
+
+    <!-- 🟢 UI ONLY: Clinic အတွက် Warning နှင့် Sync ကို ဖုံးကွယ်ရန် Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    const role = user.role || 'Hospital_Admin';
+
+                    // Clinic ဖြစ်နေပါက သတိပေးချက် (Warning) နှင့် Sync Bar ကို ဖျောက်ရန်
+                    if (role === 'Clinic') {
+                        const alertsContainer = document.getElementById('lowStockAlertsContainer');
+                        if (alertsContainer) alertsContainer.style.display = 'none';
+
+                        const syncSection = document.querySelector('.sync-section');
+                        if (syncSection) syncSection.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.warn('Role check failed:', e);
+            }
+        });
+    </script>
 </body>
 </html>

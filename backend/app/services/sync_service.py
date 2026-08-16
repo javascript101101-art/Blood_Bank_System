@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Dict, Any
 import httpx
 from app.models.sync import SyncQueue, SyncLog
@@ -65,9 +65,17 @@ class SyncService:
                     "table_name": item.table_name,
                     "record_id": str(item.record_id),
                     "operation": item.operation,
-                    "data": item.data,
+                    "data": {
+                        k: (
+                            v.upper() if k == "status" and isinstance(v, str) else 
+                            v.isoformat() if hasattr(v, 'isoformat') else 
+                            str(v) if isinstance(v, (datetime, date)) else 
+                            v
+                        )
+                        for k, v in (item.data or {}).items()
+                    },
                     "status": item.status,
-                    "created_at": item.created_at.isoformat()
+                    "created_at": item.created_at.isoformat() if item.created_at else None
                 }
                 for item in pending_items
             ]
@@ -149,7 +157,6 @@ class SyncService:
 
             updated_count = 0
             
-            # 🟢 Global ၏ Uppercase Status များကို Local ၏ Title Case သို့ ပြောင်းပေးမည့် Map
             status_mapping = {
                 "PENDING": "Pending",
                 "ASSIGNED": "Assigned",
@@ -157,15 +164,13 @@ class SyncService:
                 "FULFILLED": "Supplier_Fulfilled",
                 "DELIVERED": "Delivered",
                 "REJECTED": "Rejected",
-                "IN-TRANSIT": "In-Transit" # 🟢 ဤနေရာတွင် "In-Transit" ဟု မှန်ကန်စွာ ပြင်ဆင်ထားပါသည်
+                "IN-TRANSIT": "In-Transit"
             }
 
             for g_req in global_requests:
-                # 🟢 အရေးကြီး: JSON မှလာသော String များကို UUID object အဖြစ် ပြောင်းပေးခြင်း
                 req_id = UUID(g_req['id'])
                 req_hospital_id = UUID(g_req['requesting_hospital_id'])
                 
-                # assigned_hospital_id က null (None) ဖြစ်နိုင်တဲ့အတွက် စစ်ဆေးပြီးမှ UUID ပြောင်းပေးမည်
                 assigned_hosp_id = None
                 if g_req.get('assigned_hospital_id'):
                     assigned_hosp_id = UUID(g_req['assigned_hospital_id'])
@@ -176,18 +181,17 @@ class SyncService:
                 mapped_status = status_mapping.get(raw_g_status.upper(), raw_g_status)
 
                 if local_req:
-                    # Status ပြောင်းရင် (သို့) Assign ချခံရရင် Update လုပ်မည်
                     if local_req.status != mapped_status or local_req.assigned_hospital_id != assigned_hosp_id:
                         local_req.status = mapped_status
                         local_req.assigned_hospital_id = assigned_hosp_id
                         updated_count += 1
                 else:
-                    # 🟢 အသစ်ထည့်ပါက UUID ပြောင်းထားသော ID များကိုသာ အသုံးပြုမည်
                     new_req = GlobalBloodRequest(
                         id=req_id,
                         requesting_hospital_id=req_hospital_id,
                         blood_group=g_req['blood_group'],
                         rh_factor=g_req['rh_factor'],
+                        blood_component=g_req.get('blood_component', 'Whole_Blood'), 
                         quantity_ml=g_req['quantity_ml'],
                         urgency=g_req['urgency'],
                         status=mapped_status,
@@ -208,16 +212,28 @@ class SyncService:
 
     @staticmethod
     def _resolve_conflict(db: Session, item: SyncQueue, conflict_detail: dict):
-        """Last-Write-Wins: Overwrite local data with global data"""
+        """Last-Write-Wins: Overwrite local data with global data (with Case Handling)"""
         table_name = item.table_name
         record_id = item.record_id
         global_data = conflict_detail.get("global_data", {})
+
+        status_mapping = {
+            "PENDING": "Pending",
+            "ASSIGNED": "Assigned",
+            "SUPPLIER_FULFILLED": "Supplier_Fulfilled",
+            "FULFILLED": "Supplier_Fulfilled",
+            "DELIVERED": "Delivered",
+            "REJECTED": "Rejected",
+            "IN-TRANSIT": "In-Transit"
+        }
 
         if table_name == "donors":
             donor = db.query(Donor).filter(Donor.id == record_id).first()
             if donor:
                 for key, value in global_data.items():
                     if hasattr(donor, key) and key not in ["id", "hospital_id", "created_at", "updated_at"]:
+                        if key == "status" and isinstance(value, str):
+                            value = value.title()
                         setattr(donor, key, value)
                 db.commit()
         elif table_name == "inventory":
@@ -225,6 +241,8 @@ class SyncService:
             if inventory:
                 for key, value in global_data.items():
                     if hasattr(inventory, key) and key not in ["id", "hospital_id", "created_at", "updated_at"]:
+                        if key == "status" and isinstance(value, str):
+                            value = value.title()
                         setattr(inventory, key, value)
                 db.commit()
         elif table_name == "blood_requests":
@@ -232,6 +250,8 @@ class SyncService:
             if request:
                 for key, value in global_data.items():
                     if hasattr(request, key) and key not in ["id", "hospital_id", "created_at", "updated_at"]:
+                        if key == "status" and isinstance(value, str):
+                            value = value.title()
                         setattr(request, key, value)
                 db.commit()
         elif table_name == "global_blood_requests":
@@ -239,6 +259,9 @@ class SyncService:
             if global_req:
                 for key, value in global_data.items():
                     if hasattr(global_req, key) and key not in ["id", "requesting_hospital_id", "created_at", "updated_at"]:
+                        # 🟢 Status ကို Local Database သိသော Format ပြောင်းခြင်း
+                        if key == "status" and isinstance(value, str):
+                            value = status_mapping.get(value.upper(), value.title())
                         setattr(global_req, key, value)
                 db.commit()
 
@@ -296,12 +319,29 @@ class SyncService:
         failed_ids = []
         conflicts = []
 
+        status_mapping = {
+            "PENDING": "Pending",
+            "ASSIGNED": "Assigned",
+            "SUPPLIER_FULFILLED": "Supplier_Fulfilled",
+            "FULFILLED": "Supplier_Fulfilled",
+            "DELIVERED": "Delivered",
+            "REJECTED": "Rejected",
+            "IN-TRANSIT": "In-Transit"
+        }
+
         for item in items:
             table_name = item.get("table_name")
             record_id = item.get("record_id")
             operation = item.get("operation")
             data = item.get("data")
             item_id = item.get("id")
+
+            # 🟢 ဝင်လာသော Data ထဲမှ Status ကို စစ်ဆေး၍ Format အမှန်ချိန်းပေးခြင်း
+            if data and "status" in data and isinstance(data["status"], str):
+                if table_name == "global_blood_requests":
+                    data["status"] = status_mapping.get(data["status"].upper(), data["status"].title())
+                else:
+                    data["status"] = data["status"].title()
 
             try:
                 if table_name == "global_blood_requests":

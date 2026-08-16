@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import or_  # 🟢 ဒါလေး အသစ်ထပ်ထည့်ထားပါတယ်
+from sqlalchemy import or_
 from uuid import UUID
 from typing import List, Optional
 from fastapi import HTTPException, status
@@ -23,7 +23,7 @@ class GlobalRequestService:
         request = GlobalBloodRequest(
             **req_data.model_dump(),
             requesting_hospital_id=requesting_hospital_id,
-            status="Pending"  # 🔴 Database ENUM တွင် "Pending" ဟု သတ်မှတ်ထားပါသည်
+            status="Pending"
         )
         db.add(request)
         db.commit()
@@ -35,6 +35,7 @@ class GlobalRequestService:
             "requesting_hospital_id": str(request.requesting_hospital_id),
             "blood_group": request.blood_group,
             "rh_factor": request.rh_factor,
+            "blood_component": request.blood_component,
             "quantity_ml": request.quantity_ml,
             "urgency": request.urgency,
             "status": request.status,
@@ -90,7 +91,6 @@ class GlobalRequestService:
             current_status = request.status if request.status else ""
             new_status = update_data["status"]
 
-            # 🟢 Database ENUM တန်ဖိုးများနှင့် အံဝင်ခွင်ကျ ဖြစ်စေရန် (In-Transit ပါ ထည့်ထားသည်)
             allowed_transitions = {
                 "Pending": ["Assigned", "Supplier_Fulfilled", "Rejected"],
                 "Assigned": ["Supplier_Fulfilled", "Rejected"],
@@ -111,7 +111,7 @@ class GlobalRequestService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Request with status '{request.status}' cannot be modified"
                 )
-            
+
             update_data["status"] = new_status
 
         if "assigned_hospital_id" in update_data and update_data["assigned_hospital_id"]:
@@ -132,7 +132,8 @@ class GlobalRequestService:
     @staticmethod
     def receive_delivery(db: Session, req_id: UUID, hospital_id: UUID) -> dict:
         """
-        🆕 Hospital A (Requesting Hospital) → Blood ရောက်ပြီ Confirm လုပ်ခြင်း
+        🆕 Hospital (Requesting Hospital) → Blood ရောက်ပြီ Confirm လုပ်ခြင်း
+        (ရှိပြီးသားထဲ ပေါင်းမထည့်ဘဲ Global ကလာသော သွေးအိတ်အသစ်အဖြစ် Inventory တွင် မှတ်တမ်းတင်မည်)
         """
         request = db.query(GlobalBloodRequest).filter(
             GlobalBloodRequest.id == req_id,
@@ -142,7 +143,6 @@ class GlobalRequestService:
         if not request:
             raise HTTPException(status_code=404, detail="Request not found")
 
-        # 🟢 ဤနေရာတွင် In-Transit (သို့) Supplier_Fulfilled ဖြစ်မှ လက်ခံနိုင်ရန် ပြင်ဆင်ထားသည်
         allowed_receive_statuses = ["Supplier_Fulfilled", "In-Transit"]
         if request.status not in allowed_receive_statuses:
             raise HTTPException(
@@ -150,67 +150,44 @@ class GlobalRequestService:
                 detail=f"Can only receive requests with 'In-Transit' status. Current: {request.status}"
             )
 
-        existing_inventory = db.query(Inventory).filter(
-            Inventory.hospital_id == hospital_id,
-            Inventory.blood_group == request.blood_group,
-            Inventory.rh_factor == request.rh_factor,
-            Inventory.status == "Available"
-        ).first()
+        # 🟢 ရှိပြီးသားကို သွားမရှာတော့ဘဲ၊ သွေးအိတ်အသစ် (Discrete Bag) အမြဲ ဖန်တီးမည်
+        new_inventory = Inventory(
+            hospital_id=hospital_id,
+            blood_group=request.blood_group,
+            rh_factor=request.rh_factor,
+            blood_component=request.blood_component,
+            quantity_ml=request.quantity_ml,
+            expiry_date=datetime.now().date() + timedelta(days=35), # ပုံမှန် ၃၅ ရက် သက်တမ်း
+            status="Available"
+        )
+        db.add(new_inventory)
+        db.flush() 
+        inv_id = str(new_inventory.id)
 
-        if existing_inventory:
-            existing_inventory.quantity_ml += request.quantity_ml
-            db.add(existing_inventory)
-            inv_id = str(existing_inventory.id)
+        # Inventory အသစ်ဝင်ကြောင်း Sync Queue ထဲ ထည့်ခြင်း
+        inv_sync = SyncQueue(
+            hospital_id=hospital_id,
+            table_name="inventory",
+            record_id=new_inventory.id,
+            operation="INSERT",
+            data={
+                "blood_group": new_inventory.blood_group,
+                "rh_factor": new_inventory.rh_factor,
+                "blood_component": new_inventory.blood_component,
+                "quantity_ml": new_inventory.quantity_ml,
+                "expiry_date": str(new_inventory.expiry_date),
+                "status": new_inventory.status
+            },
+            status="PENDING"
+        )
+        db.add(inv_sync)
 
-            inv_sync = SyncQueue(
-                hospital_id=hospital_id,
-                table_name="inventory",
-                record_id=existing_inventory.id,
-                operation="UPDATE",
-                data={
-                    "blood_group": existing_inventory.blood_group,
-                    "rh_factor": existing_inventory.rh_factor,
-                    "quantity_ml": existing_inventory.quantity_ml,
-                    "expiry_date": str(existing_inventory.expiry_date),
-                    "status": existing_inventory.status
-                },
-                status="PENDING"
-            )
-            db.add(inv_sync)
-        else:
-            new_inventory = Inventory(
-                hospital_id=hospital_id,
-                blood_group=request.blood_group,
-                rh_factor=request.rh_factor,
-                quantity_ml=request.quantity_ml,
-                expiry_date=datetime.now().date() + timedelta(days=30),
-                status="Available"
-            )
-            db.add(new_inventory)
-            db.flush() 
-            inv_id = str(new_inventory.id)
-
-            inv_sync = SyncQueue(
-                hospital_id=hospital_id,
-                table_name="inventory",
-                record_id=new_inventory.id,
-                operation="INSERT",
-                data={
-                    "blood_group": new_inventory.blood_group,
-                    "rh_factor": new_inventory.rh_factor,
-                    "quantity_ml": new_inventory.quantity_ml,
-                    "expiry_date": str(new_inventory.expiry_date),
-                    "status": new_inventory.status
-                },
-                status="PENDING"
-            )
-            db.add(inv_sync)
-
-        # 🔴 Request Status ကို "Delivered" သို့ ပြောင်းပါမည်
+        # Request ကို Delivered ဖြစ်ကြောင်း Update လုပ်ခြင်း
         request.status = "Delivered"
         db.commit()
         db.refresh(request)
 
+        # Request အခြေအနေပြောင်းကြောင်း Sync Queue ထဲ ထည့်ခြင်း
         req_sync = SyncQueue(
             hospital_id=hospital_id,
             table_name="global_blood_requests",
@@ -221,6 +198,7 @@ class GlobalRequestService:
                 "requesting_hospital_id": str(request.requesting_hospital_id),
                 "blood_group": request.blood_group,
                 "rh_factor": request.rh_factor,
+                "blood_component": request.blood_component, 
                 "quantity_ml": request.quantity_ml,
                 "urgency": request.urgency,
                 "status": request.status,
@@ -233,10 +211,11 @@ class GlobalRequestService:
         db.commit()
 
         return {
-            "message": "Blood received! Inventory updated successfully.",
+            "message": "Blood received! New inventory bag added successfully.",
             "request_id": str(request.id),
             "blood_group": request.blood_group,
             "rh_factor": request.rh_factor,
+            "blood_component": request.blood_component,
             "quantity_added": request.quantity_ml,
             "inventory_id": inv_id
         }
@@ -244,10 +223,9 @@ class GlobalRequestService:
     @staticmethod
     def fulfill_request_to_global(db: Session, req_id: UUID, hospital_id: UUID) -> dict:
         """
-        🆕 Hospital A (Assigned Hospital) မှ သွေးလှူဒါန်းရန် (Fulfill)
+        🆕 Assigned Hospital မှ သွေးလှူဒါန်းရန် (Fulfill)
         Local Inventory မှ သွေးနှုတ်မည်။
         """
-        # ၁။ Request ကို ရှာမည် (မိမိဆေးရုံကို Assign ချထားသော Request ဖြစ်ရမည်)
         request = db.query(GlobalBloodRequest).filter(
             GlobalBloodRequest.id == req_id,
             GlobalBloodRequest.assigned_hospital_id == hospital_id
@@ -256,18 +234,18 @@ class GlobalRequestService:
         if not request:
             raise HTTPException(status_code=404, detail="Assigned request not found")
 
-        # 🔴 Database တွင် "Assigned" အဆင့်မှသာ Fulfill လုပ်နိုင်မည်
         if request.status != "Assigned":
             raise HTTPException(
                 status_code=400,
                 detail=f"Can only fulfill requests with 'Assigned' status. Current: {request.status}"
             )
 
-        # ၂။ Local Inventory တွင် သွေးလောက်/မလောက် စစ်မည် (Expiry Date အစောဆုံးကနေ စသုံးရန် Order By လုပ်ထားသည်)
+        # 🟢 Local Inventory တွင် ရှာရာ၌ Component ပါ တူညီမှသာ နှုတ်မည်
         available_inventory = db.query(Inventory).filter(
             Inventory.hospital_id == hospital_id,
             Inventory.blood_group == request.blood_group,
             Inventory.rh_factor == request.rh_factor,
+            Inventory.blood_component == request.blood_component,
             Inventory.status == "Available",
             Inventory.quantity_ml > 0
         ).order_by(Inventory.expiry_date.asc()).all()
@@ -279,20 +257,18 @@ class GlobalRequestService:
                 detail=f"Not enough blood in inventory. Required: {request.quantity_ml}ml, Available: {total_available}ml"
             )
 
-        # ၃။ Inventory မှ သွေးကို လျှော့ချမည် (FIFO - First In First Out)
         remaining_to_deduct = request.quantity_ml
         for inv in available_inventory:
             if remaining_to_deduct <= 0:
                 break
-                
+
             deduct_amount = min(inv.quantity_ml, remaining_to_deduct)
             inv.quantity_ml -= deduct_amount
             remaining_to_deduct -= deduct_amount
-            
-            if inv.quantity_ml == 0:
-                inv.status = "Used" # သွေးကုန်သွားပါက Status ပြောင်းမည်
 
-            # ၄။ Inventory အပြောင်းအလဲကို Sync Queue ထဲထည့်မည်
+            if inv.quantity_ml == 0:
+                inv.status = "Used"
+
             inv_sync = SyncQueue(
                 hospital_id=hospital_id,
                 table_name="inventory",
@@ -306,10 +282,8 @@ class GlobalRequestService:
             )
             db.add(inv_sync)
 
-        # ၅။ Request Status ကို Update လုပ်မည်
         request.status = "Supplier_Fulfilled"
-        
-        # ၆။ Request အပြောင်းအလဲကို Sync Queue ထဲထည့်မည်
+
         req_sync = SyncQueue(
             hospital_id=hospital_id,
             table_name="global_blood_requests",
@@ -322,7 +296,7 @@ class GlobalRequestService:
             status="PENDING"
         )
         db.add(req_sync)
-        
+
         db.commit()
         db.refresh(request)
 
