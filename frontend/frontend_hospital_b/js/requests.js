@@ -1,5 +1,5 @@
 // ============================================
-// Blood Request Management (FIXED FOR EXTERNAL CLINIC & COMPONENTS)
+// Blood Request Management (FIXED FOR EXTERNAL CLINIC, COMPONENTS & TRACEABILITY)
 // ============================================
 let editingRequestId = null;
 let currentUserRole = null;
@@ -130,6 +130,14 @@ async function loadRequests() {
                 // 🟢 သွေးအစိတ်အပိုင်း (Blood Component) ကို ရှင်းလင်းစွာ ပြသရန်
                 const componentDisplay = (req.blood_component || 'Red_Cells').replace('_', ' ').toUpperCase();
 
+                // 🟢 ထုတ်ပေးလိုက်သော သွေးအိတ်များ (Unit IDs) ကို Badge အနေဖြင့် ပြသရန် Logic
+                let unitIdsHtml = '<span style="color: #94a3b8;">-</span>';
+                if (req.fulfilled_inventories && req.fulfilled_inventories.length > 0) {
+                    unitIdsHtml = req.fulfilled_inventories.map(inv => {
+                        return `<span class="badge" style="background:#e0f2fe; color:#0369a1; border: 1px solid #bae6fd; font-size:11px; margin-right: 4px; display: inline-block; margin-bottom: 2px;">${inv.unit_id || 'N/A'}</span>`;
+                    }).join('');
+                }
+
                 return `
                     <tr>
                         <td><strong>${req.clinic_name}</strong><br><small>${req.contact_phone}</small></td>
@@ -139,7 +147,8 @@ async function loadRequests() {
                         <td>${req.quantity_units}</td>
                         <td><span class="urgency-badge urgency-${req.urgency ? req.urgency.split(' ')[0].toLowerCase() : 'normal'}">${req.urgency}</span></td>
                         <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
-                        <td>${formatDateTime(req.requested_at || req.created_at)}</td>
+                        <!-- 🟢 ဒီနေရာမှာ Unit IDs တွေ ဝင်လာပါပြီ -->
+                        <td>${unitIdsHtml}</td>
                         <td>
                             ${actionButtons}
                             ${editDeleteButtons}

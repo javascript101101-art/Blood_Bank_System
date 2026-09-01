@@ -174,6 +174,9 @@ class SyncService:
                 assigned_hosp_id = None
                 if g_req.get('assigned_hospital_id'):
                     assigned_hosp_id = UUID(g_req['assigned_hospital_id'])
+                
+                # 🟢 [အသစ်] Global မှ တွဲပို့လိုက်သော Unit ID များ ဖမ်းယူခြင်း
+                fulfilled_unit_ids = g_req.get('fulfilled_unit_ids')
 
                 local_req = db.query(GlobalBloodRequest).filter(GlobalBloodRequest.id == req_id).first()
                 
@@ -181,9 +184,14 @@ class SyncService:
                 mapped_status = status_mapping.get(raw_g_status.upper(), raw_g_status)
 
                 if local_req:
-                    if local_req.status != mapped_status or local_req.assigned_hospital_id != assigned_hosp_id:
+                    # 🟢 [ပြင်ဆင်ချက်] Unit ID ပါ ပြောင်းလဲမှု ရှိ/မရှိ စစ်ဆေးပါမည်
+                    if (local_req.status != mapped_status or 
+                        local_req.assigned_hospital_id != assigned_hosp_id or 
+                        local_req.fulfilled_unit_ids != fulfilled_unit_ids):
+                        
                         local_req.status = mapped_status
                         local_req.assigned_hospital_id = assigned_hosp_id
+                        local_req.fulfilled_unit_ids = fulfilled_unit_ids # 🟢 Unit ID အသစ် ဝင်မည်
                         updated_count += 1
                 else:
                     new_req = GlobalBloodRequest(
@@ -196,7 +204,8 @@ class SyncService:
                         urgency=g_req['urgency'],
                         status=mapped_status,
                         assigned_hospital_id=assigned_hosp_id,
-                        request_note=g_req.get('request_note')
+                        request_note=g_req.get('request_note'),
+                        fulfilled_unit_ids=fulfilled_unit_ids # 🟢 အသစ်ဖန်တီးရာတွင်ပါ Unit ID ထည့်ပေးမည်
                     )
                     db.add(new_req)
                     updated_count += 1
@@ -259,7 +268,6 @@ class SyncService:
             if global_req:
                 for key, value in global_data.items():
                     if hasattr(global_req, key) and key not in ["id", "requesting_hospital_id", "created_at", "updated_at"]:
-                        # 🟢 Status ကို Local Database သိသော Format ပြောင်းခြင်း
                         if key == "status" and isinstance(value, str):
                             value = status_mapping.get(value.upper(), value.title())
                         setattr(global_req, key, value)
@@ -336,7 +344,6 @@ class SyncService:
             data = item.get("data")
             item_id = item.get("id")
 
-            # 🟢 ဝင်လာသော Data ထဲမှ Status ကို စစ်ဆေး၍ Format အမှန်ချိန်းပေးခြင်း
             if data and "status" in data and isinstance(data["status"], str):
                 if table_name == "global_blood_requests":
                     data["status"] = status_mapping.get(data["status"].upper(), data["status"].title())

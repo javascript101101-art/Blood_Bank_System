@@ -1,8 +1,9 @@
 // ============================================
-// Inventory Management (UPDATED with Splitting Logic & Traceability)
+// Inventory Management (UPDATED with Filtering & Unit ID Logic)
 // ============================================
 let editingInventoryId = null;
-let currentEditingComponent = "Whole_Blood"; // 🟢 Edit လုပ်နေသော သွေးအမျိုးအစားကို မှတ်သားထားရန်
+let currentEditingComponent = "Whole_Blood"; 
+let allInventoryData = []; 
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!isAuthenticated()) {
@@ -10,14 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    setupFilters(); 
     loadInventory();
 
     // Modal events
     const modal = document.getElementById('inventoryModal');
-    const addBtn = document.getElementById('addInventoryBtn');
     const closeBtn = document.querySelector('.close');
 
-    if (addBtn) addBtn.addEventListener('click', () => openInventoryModal());
     if (closeBtn) closeBtn.addEventListener('click', closeInventoryModal);
 
     window.addEventListener('click', (e) => {
@@ -30,7 +30,44 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-// Load Inventory
+// Filtering Logic 
+// ============================================
+function setupFilters() {
+    const filterIds = ['filterBloodGroup', 'filterRhFactor', 'filterComponent', 'filterStatus'];
+    filterIds.forEach(id => {
+        document.getElementById(id)?.addEventListener('change', applyFilters);
+    });
+
+    document.getElementById('resetFilterBtn')?.addEventListener('click', () => {
+        filterIds.forEach(id => document.getElementById(id).value = 'all');
+        applyFilters();
+    });
+}
+
+function applyFilters() {
+    const bg = document.getElementById('filterBloodGroup').value;
+    const rh = document.getElementById('filterRhFactor').value;
+    const comp = document.getElementById('filterComponent').value.toLowerCase();
+    const stat = document.getElementById('filterStatus').value.toLowerCase();
+
+    const filteredData = allInventoryData.filter(item => {
+        const matchBg = (bg === 'all') || (item.blood_group === bg);
+        const matchRh = (rh === 'all') || (item.rh_factor === rh);
+        
+        const itemComp = (item.blood_component || 'whole_blood').toLowerCase();
+        const matchComp = (comp === 'all') || (itemComp === comp);
+        
+        const itemStat = (item.status || '').toLowerCase();
+        const matchStat = (stat === 'all') || (itemStat === stat);
+
+        return matchBg && matchRh && matchComp && matchStat;
+    });
+
+    renderInventoryTable(filteredData);
+}
+
+// ============================================
+// Load & Render Inventory
 // ============================================
 async function loadInventory() {
     const tbody = document.getElementById('inventoryBody');
@@ -42,55 +79,66 @@ async function loadInventory() {
         const result = await apiRequest('/inventory/', { method: 'GET' });
         
         if (result && result.status === 200 && result.data) {
-            if (result.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No inventory records found.</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = result.data.map(item => {
-                // History Column
-                let historyHtml = '<span style="color: #94a3b8;">-</span>';
-                if (item.status === 'Used' && item.blood_request_id) {
-                    const shortReqId = item.blood_request_id.substring(0, 8).toUpperCase();
-                    historyHtml = `<span class="badge" style="background:#e2e8f0; color:#475569; font-size:11px; padding: 4px 6px; border-radius: 4px;" title="Request ID: ${item.blood_request_id}">REQ: ${shortReqId}</span>`;
-                }
-
-                // Donor Column
-                let donorHtml = '<span style="color: #94a3b8;">-</span>';
-                if (item.donor_id) {
-                    const shortDonorId = item.donor_id.substring(0, 8).toUpperCase();
-                    donorHtml = `<span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:11px; padding: 4px 6px; border-radius: 4px;" title="Donor ID: ${item.donor_id}">DNR: ${shortDonorId}</span>`;
-                }
-
-                return `
-                    <tr>
-                        <td>${donorHtml}</td>
-                        <td><strong>${item.blood_group}</strong></td>
-                        <td>${item.rh_factor}</td>
-                        <td><span class="badge" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${item.blood_component || 'Whole_Blood'}</span></td>
-                        <td>${item.quantity_ml}</td>
-                        <td>${formatDate(item.expiry_date)}</td>
-                        <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
-                        <td>${historyHtml}</td>
-                        <td>
-                            ${item.status === 'Quarantined' ? 
-                                `<button class="btn btn-info btn-sm" onclick="openSplitModal('${item.id}', ${item.quantity_ml})" title="သွေးခွဲထုတ်မည်">⚗️</button>` 
-                                : ''
-                            }
-                            ${item.status === 'Used' ? 
-                                '' 
-                                : `<button class="btn btn-warning btn-sm" onclick="editInventory('${item.id}')">✏️</button>
-                                   <button class="btn btn-danger btn-sm" onclick="deleteInventory('${item.id}')">🗑️</button>`
-                            }
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            allInventoryData = result.data; 
+            applyFilters(); 
         }
     } catch (error) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error loading inventory.</td></tr>';
         console.error('Error loading inventory:', error);
     }
+}
+
+function renderInventoryTable(data) {
+    const tbody = document.getElementById('inventoryBody');
+    if (!tbody) return;
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #64748b;">ရွေးချယ်ထားသော အချက်အလက်များနှင့် ကိုက်ညီသည့် သွေးလက်ကျန် မရှိပါ။</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = data.map(item => {
+        // History Column
+        let historyHtml = '<span style="color: #94a3b8;">-</span>';
+        if (item.status === 'Used' && item.blood_request_id) {
+            const shortReqId = item.blood_request_id.substring(0, 8).toUpperCase();
+            historyHtml = `<span class="badge" style="background:#e2e8f0; color:#475569; font-size:11px; padding: 4px 6px; border-radius: 4px;" title="Request ID: ${item.blood_request_id}">REQ: ${shortReqId}</span>`;
+        }
+
+        // 🟢 Unit ID Column (အလှူရှင်အစား သွေးအိတ်နံပါတ်ကို ပြသမည်)
+        let unitHtml = '<span style="color: #94a3b8;">-</span>';
+        if (item.unit_id) {
+            unitHtml = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:bold; font-size:11px; padding: 5px 8px; border-radius: 4px;">${item.unit_id}</span>`;
+        }
+
+        // Component Display Label
+        let displayComponent = item.blood_component || 'Whole_Blood';
+        displayComponent = displayComponent.replace('_', ' ').toUpperCase();
+
+        return `
+            <tr>
+                <td>${unitHtml}</td> <!-- 🟢 ဒီနေရာမှာ Unit ID ဝင်လာပါပြီ -->
+                <td><strong>${item.blood_group}</strong></td>
+                <td>${item.rh_factor}</td>
+                <td><span class="badge" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-size: 11px;">${displayComponent}</span></td>
+                <td><strong>${item.quantity_ml}</strong></td>
+                <td>${formatDate(item.expiry_date)}</td>
+                <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
+                <td>${historyHtml}</td>
+                <td>
+                    ${item.status === 'Quarantined' ? 
+                        `<button class="btn btn-info btn-sm" onclick="openSplitModal('${item.id}', ${item.quantity_ml})" title="သွေးခွဲထုတ်မည်">⚗️</button>` 
+                        : ''
+                    }
+                    ${item.status === 'Used' ? 
+                        '' 
+                        : `<button class="btn btn-warning btn-sm" onclick="editInventory('${item.id}')" title="ပြင်ဆင်မည်">✏️</button>
+                           <button class="btn btn-danger btn-sm" onclick="deleteInventory('${item.id}')" title="ဖျက်မည်">🗑️</button>`
+                    }
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // ============================================
@@ -105,10 +153,10 @@ function openInventoryModal(inventoryData = null) {
     errorEl.style.display = 'none';
     form.reset();
     editingInventoryId = null;
-    currentEditingComponent = "Whole_Blood"; // Default reset
+    currentEditingComponent = "Whole_Blood"; 
 
     if (inventoryData) {
-        title.textContent = 'Edit Inventory';
+        title.innerHTML = '<i class="fas fa-edit" style="color: var(--hospital-blue);"></i> သွေးလက်ကျန် ပြင်ဆင်ရန်';
         document.getElementById('inventoryId').value = inventoryData.id;
         document.getElementById('invBloodGroup').value = inventoryData.blood_group;
         document.getElementById('invRhFactor').value = inventoryData.rh_factor;
@@ -117,11 +165,7 @@ function openInventoryModal(inventoryData = null) {
         document.getElementById('invStatus').value = inventoryData.status;
         
         editingInventoryId = inventoryData.id;
-        // 🟢 Edit လုပ်ချိန်တွင် မူလ Component အမည်ကို မှတ်သားထားပါသည်
         currentEditingComponent = inventoryData.blood_component || "Whole_Blood"; 
-    } else {
-        title.textContent = 'Add New Inventory';
-        document.getElementById('invStatus').value = 'Available';
     }
 
     modal.classList.add('show');
@@ -179,7 +223,7 @@ async function handleInventorySubmit(e) {
         quantity_ml: parseInt(document.getElementById('invQuantity').value),
         expiry_date: document.getElementById('invExpiryDate').value,
         status: document.getElementById('invStatus').value,
-        blood_component: currentEditingComponent // 🟢 မှတ်သားထားသော မူလ Component ကိုသာ ပြန်ပို့ပေးပါမည်
+        blood_component: currentEditingComponent 
     };
 
     if (!inventoryData.blood_group || !inventoryData.rh_factor) {

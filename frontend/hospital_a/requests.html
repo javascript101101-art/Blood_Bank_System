@@ -40,13 +40,14 @@
                     <thead>
                         <tr>
                             <th style="padding-left: 0;">ဆေးရုံအမည်</th>
-                            <th>သွေးအစိတ်အပိုင်း</th> <!-- 🟢 Table Header တွင်လည်း Component ပြသရန် -->
+                            <th>သွေးအစိတ်အပိုင်း</th> 
                             <th>သွေးအုပ်စု</th>
                             <th>လိုအပ်သည့်ရက်</th>
                             <th>ပမာဏ (ယူနစ်)</th>
                             <th>အရေးကြီးပုံ</th>
                             <th>အခြေအနေ</th>
-                            <th>တောင်းဆိုသည့်အချိန်</th>
+                            <!-- 🟢 Traceability အတွက် ထုတ်ပေးလိုက်သော သွေးအိတ်နံပါတ်များ ပြသရန် Column အသစ် -->
+                            <th>ထုတ်ပေးခဲ့သော သွေးအိတ်များ (Unit IDs)</th>
                             <th style="padding-right: 0; text-align: center;">ဆောင်ရွက်ချက်</th>
                         </tr>
                     </thead>
@@ -100,7 +101,6 @@
 
                 <div class="request-section-title"><i class="fas fa-tint"></i> သွေးတောင်းခံမှု အသေးစိတ်</div>
 
-                <!-- 🟢 🆕 သွေးအစိတ်အပိုင်း (Blood Component) ရွေးချယ်ရန် Field အသစ် (Whole Blood မပါပါ) -->
                 <div class="form-group">
                     <label for="reqBloodComponent">သွေးအစိတ်အပိုင်း (Blood Component) <span style="color: #dc2626;">*</span></label>
                     <select id="reqBloodComponent" required class="form-control">
@@ -126,9 +126,16 @@
                             <option value="O Negative">O Negative</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="reqQuantity">ပမာဏ (ယူနစ်) <span style="color: #dc2626;">*</span></label>
-                        <input type="number" id="reqQuantity" min="1" required placeholder="ဥပမာ - 2">
+                    <!-- 🟢 [အသစ်] အိတ်အရေအတွက်နှင့် ပမာဏ ခွဲခြားတောင်းခံခြင်း -->
+                    <div class="form-group" style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label for="reqQuantity">အိတ်အရေအတွက် <span style="color: #dc2626;">*</span></label>
+                            <input type="number" id="reqQuantity" min="1" required placeholder="ဥပမာ - 2">
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="reqVolume">တစ်အိတ်လျှင် (ml) <span style="color: #dc2626;">*</span></label>
+                            <input type="number" id="reqVolume" min="1" value="500" required placeholder="ဥပမာ - 500">
+                        </div>
                     </div>
                 </div>
 
@@ -163,7 +170,7 @@
                 </div>
 
                 <div class="request-form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> သွေးတောင်းခံလွှာ တင်သွင်းမည်</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> သွေးတောင်းခံလွှာ တင်သွင်း/ပြင်ဆင်မည်</button>
                     <button type="button" class="btn btn-secondary-outline close">ပယ်ဖျက်မည်</button>
                 </div>
 
@@ -196,11 +203,13 @@
                 if (userStr) {
                     const user = JSON.parse(userStr);
                     const role = user.role || 'Hospital_Admin';
-                    if (role !== 'Clinic') {
-                        const addBtn = document.getElementById('addRequestBtn');
-                        if (addBtn) addBtn.style.display = 'none';
+                    
+                    if (role === 'Clinic') {
                         const statusGroup = document.getElementById('statusGroup');
                         if (statusGroup) statusGroup.style.display = 'none';
+                    } else {
+                        const addBtn = document.getElementById('addRequestBtn');
+                        if (addBtn) addBtn.style.display = 'none';
                     }
                 }
             } catch (e) {

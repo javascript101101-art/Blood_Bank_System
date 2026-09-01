@@ -40,11 +40,9 @@ class GlobalRequestService:
             current_status = request.status.upper() if request.status else ""
             new_status = update_data["status"].upper()
 
-            # UI မှ ပို့လာသော Status များကို Database ပုံစံသို့ ပြောင်းလဲခြင်း
             if new_status == "FULFILLED":
                 new_status = "SUPPLIER_FULFILLED"
             
-            # 🟢 IN-TRANSIT နဲ့ DELIVERED ကို သီးခြားစီ ခွဲထားပါမည်
             allowed_transitions = {
                 "PENDING": ["ASSIGNED", "SUPPLIER_FULFILLED", "REJECTED"],
                 "ASSIGNED": ["SUPPLIER_FULFILLED", "REJECTED"],
@@ -70,25 +68,28 @@ class GlobalRequestService:
             # 🩸 INVENTORY AUTOMATION LOGIC
             # ==========================================
             
-            # ၁။ Global ကနေ တိုက်ရိုက် သွေးထုတ်ပေးခြင်း (Pending -> Supplier_Fulfilled)
-            # ဒီနေရာမှာသာ Global Inventory ထဲက နှုတ်ပါမည်။
-            if current_status == "PENDING" and new_status == "SUPPLIER_FULFILLED":
-                removed = GlobalInventoryService.remove_blood(
+            # 🟢 PENDING သို့မဟုတ် ASSIGNED မှ SUPPLIER_FULFILLED သို့ ပြောင်းလဲသည့်အခါ (သွေးထုတ်ပေးမည်)
+            if current_status in ["PENDING", "ASSIGNED"] and new_status == "SUPPLIER_FULFILLED":
+                
+                # Global Inventory ထဲမှ သွေးထုတ်ယူပြီး Unit ID များကို တောင်းခံမည်
+                removed_result = GlobalInventoryService.remove_blood(
                     db=db,
                     blood_group=request.blood_group,
                     rh_factor=request.rh_factor,
-                    blood_component=request.blood_component, # 🟢 Component ပါ ထည့်ပေးလိုက်ပါသည်
+                    blood_component=request.blood_component, 
                     quantity_ml=request.quantity_ml
                 )
-                if not removed:
+                
+                # သွေးမလောက်ပါက Error တက်မည်
+                if not removed_result:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Not enough stock in Global Central Inventory!"
                     )
-
-            # 🔴 မှတ်ချက်: Supplier (Local Hospital) ကနေ ပို့တဲ့အခါပဲဖြစ်ဖြစ်၊ လမ်းမှာ In-Transit ဖြစ်နေတဲ့အခါပဲဖြစ်ဖြစ် 
-            # Global Inventory ကို အတိုး/အလျော့ လုပ်စရာ မလိုတော့ပါ။
-            # ==========================================
+                
+                # Unit ID များကို fulfilled_unit_ids တွင် သိမ်းဆည်းရန်
+                if isinstance(removed_result, list) and len(removed_result) > 0:
+                    update_data["fulfilled_unit_ids"] = ",".join(removed_result)
 
             update_data["status"] = new_status
 
@@ -144,7 +145,6 @@ class GlobalRequestService:
         if not request:
             raise HTTPException(status_code=404, detail="Request not found")
         
-        # 🟢 Status ကို IN-TRANSIT သို့ ပြောင်းပါမည်
         req_data = GlobalBloodRequestUpdate(status="IN-TRANSIT")
         return GlobalRequestService.update_request(db, req_id, req_data)
 
@@ -158,13 +158,12 @@ class GlobalRequestService:
         
         summary = {}
         for inv in inventories:
-            # 🟢 Component ကိုပါ key တွင် ပေါင်းထည့်ထားပါသည်
             key = f"{inv.blood_group}_{inv.rh_factor}_{getattr(inv, 'blood_component', 'Whole_Blood')}"
             if key not in summary:
                 summary[key] = {
                     "blood_group": inv.blood_group,
                     "rh_factor": inv.rh_factor,
-                    "blood_component": getattr(inv, 'blood_component', 'Whole_Blood'), # 🟢
+                    "blood_component": getattr(inv, 'blood_component', 'Whole_Blood'),
                     "quantity_ml": 0
                 }
             summary[key]["quantity_ml"] += inv.quantity_ml
@@ -185,13 +184,12 @@ class GlobalRequestService:
             if inventories:
                 summary = {}
                 for inv in inventories:
-                    # 🟢 Component ကိုပါ key တွင် ပေါင်းထည့်ထားပါသည်
                     key = f"{inv.blood_group}_{inv.rh_factor}_{getattr(inv, 'blood_component', 'Whole_Blood')}"
                     if key not in summary:
                         summary[key] = {
                             "blood_group": inv.blood_group,
                             "rh_factor": inv.rh_factor,
-                            "blood_component": getattr(inv, 'blood_component', 'Whole_Blood'), # 🟢
+                            "blood_component": getattr(inv, 'blood_component', 'Whole_Blood'), 
                             "quantity_ml": 0
                         }
                     summary[key]["quantity_ml"] += inv.quantity_ml

@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import List, Optional
@@ -8,6 +9,22 @@ from app.models.sync import SyncQueue
 from app.schemas.inventory_schema import InventoryCreate, InventoryUpdate, InventorySplitRequest
 
 class InventoryService:
+
+    # ============================================
+    # 🟢 Unit ID အလိုအလျောက် ဖန်တီးပေးသည့် Helper
+    # ============================================
+    @staticmethod
+    def _generate_unit_id(component: str = None, parent_unit_id: str = None) -> str:
+        """ Unit ID အလိုအလျောက် ဖန်တီးပေးသည့် Function """
+        year = datetime.now().year
+        if parent_unit_id and component:
+            # ခွဲထုတ်လိုက်သော သွေးဆိုလျှင် မူလ ID အနောက်မှာ Component နာမည် တပ်ပေးမည် (ဥပမာ: UNIT-2026-ABCDEF-RBC)
+            short_comp = "RBC" if component == "Red_Cells" else "FFP" if component == "Plasma" else "PLT" if component == "Platelets" else component
+            return f"{parent_unit_id}-{short_comp}"
+        else:
+            # သွေးအသစ်ဆိုလျှင် အသစ်ထုတ်မည် (ဥပမာ: UNIT-2026-ABCDEF)
+            random_hex = uuid.uuid4().hex[:6].upper()
+            return f"UNIT-{year}-{random_hex}"
     
     @staticmethod
     def create_inventory(db: Session, inv_data: InventoryCreate, hospital_id: UUID) -> Inventory:
@@ -37,7 +54,9 @@ class InventoryService:
             quantity_ml=inv_data.quantity_ml,
             storage_condition=storage_condition,
             expiry_date=calculated_expiry,
-            status=inv_data.status or "Available"
+            status=inv_data.status or "Available",
+            # 🟢 Unit ID ထည့်သွင်းခြင်း
+            unit_id=inv_data.unit_id or InventoryService._generate_unit_id()
         )
         db.add(inventory)
         db.commit()
@@ -49,7 +68,7 @@ class InventoryService:
     @staticmethod
     def get_inventories(db: Session, hospital_id: UUID) -> List[Inventory]:
         InventoryService._auto_expire_inventories(db, hospital_id)
-        return db.query(Inventory).filter(Inventory.hospital_id == hospital_id).all()
+        return db.query(Inventory).filter(Inventory.hospital_id == hospital_id).order_by(Inventory.created_at.desc()).all()
 
     @staticmethod
     def get_inventory(db: Session, inv_id: UUID, hospital_id: UUID) -> Optional[Inventory]:
@@ -99,6 +118,9 @@ class InventoryService:
 
         new_components = []
         today = datetime.now().date()
+        
+        # 🟢 မူလ သွေးအိတ်နံပါတ်ကို ယူပါမည် (မရှိခဲ့လျှင် အသစ်ထုတ်မည်)
+        parent_unit_id = original_inv.unit_id or InventoryService._generate_unit_id()
 
         # သွေးအစိတ်အပိုင်းများ အသစ်ဖန်တီးပေးမည့် Helper Function
         def _create_component(component_type, quantity, exp_days, storage):
@@ -112,7 +134,9 @@ class InventoryService:
                     quantity_ml=quantity,
                     storage_condition=storage,
                     expiry_date=today + timedelta(days=exp_days),
-                    status="Available" # ခွဲထုတ်ပြီးပါက အသင့်သုံးနိုင်ပြီဖြစ်သည်
+                    status="Available", # ခွဲထုတ်ပြီးပါက အသင့်သုံးနိုင်ပြီဖြစ်သည်
+                    # 🟢 Component အသစ်အတွက် Unit ID အသစ်ထုတ်ပေးခြင်း
+                    unit_id=InventoryService._generate_unit_id(component_type, parent_unit_id)
                 )
                 db.add(new_item)
                 new_components.append(new_item)
@@ -155,7 +179,6 @@ class InventoryService:
     # ============================================
     @staticmethod
     def get_low_stock_warnings(db: Session, hospital_id: UUID, threshold: float = 500.0) -> List[dict]:
-        # 🟢 blood_component ကိုပါ query နှင့် group_by တွင် ထည့်သွင်းထားပါသည်
         summary = db.query(
             Inventory.blood_component,
             Inventory.blood_group,
@@ -164,7 +187,7 @@ class InventoryService:
         ).filter(
             Inventory.hospital_id == hospital_id,
             Inventory.status == "Available",
-            Inventory.blood_component != "Whole_Blood"  # 🟢 Whole Blood များကို Warning စာရင်းမှ ဖယ်ထုတ်ထားပါသည်
+            Inventory.blood_component != "Whole_Blood"
         ).group_by(
             Inventory.blood_component,
             Inventory.blood_group,
@@ -174,7 +197,6 @@ class InventoryService:
         warnings = []
         for item in summary:
             current_total = item.total_ml or 0
-            # 🟢 Frontend က ယူသုံးရလွယ်အောင် blood_component ပါ ထည့်ပေးထားပါသည်
             warnings.append({
                 "blood_component": item.blood_component,
                 "blood_type": f"{item.blood_group} {item.rh_factor}",
@@ -199,10 +221,13 @@ class InventoryService:
             "expiry_date": str(inventory.expiry_date),
             "status": inventory.status,
             "blood_component": inventory.blood_component,
-            "storage_condition": inventory.storage_condition
+            "storage_condition": inventory.storage_condition,
+            "unit_id": inventory.unit_id # 🟢 Sync Data ထဲတွင် unit_id ကိုပါ ပေါင်းထည့်ပါသည်
         }
         if inventory.donor_id:
             data["donor_id"] = str(inventory.donor_id)
+        if inventory.blood_request_id:
+            data["blood_request_id"] = str(inventory.blood_request_id)
 
         sync_entry = SyncQueue(
             hospital_id=inventory.hospital_id,

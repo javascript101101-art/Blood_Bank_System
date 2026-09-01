@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import List, Dict, Any
 from app.models.donor import Donor
 from app.models.inventory import Inventory
-from app.models.blood_request import BloodRequest
 from app.models.global_blood_request import GlobalBloodRequest
 from app.models.hospital import Hospital
 from app.models.sync import SyncQueue, SyncLog
@@ -60,12 +59,11 @@ class GlobalSyncService:
                 model_map = {
                     "donors": Donor,
                     "inventory": Inventory,
-                    "blood_requests": BloodRequest,
                     "global_blood_requests": GlobalBloodRequest
                 }
                 model = model_map.get(item.table_name)
                 if not model:
-                    print(f"❌ Unknown table: {item.table_name}")
+                    print(f"❌ Unknown table or ignored table: {item.table_name}")
                     failed_ids.append(item.id)
                     continue
 
@@ -83,11 +81,7 @@ class GlobalSyncService:
                         if 'blood_group' not in item_data:
                             item_data['blood_group'] = 'O'
 
-                    # ==========================================
-                    # ✅ Table အလိုက် Status များကို ခွဲခြားပြင်ဆင်ခြင်း (INSERT)
-                    # ==========================================
                     if 'status' in item_data and isinstance(item_data['status'], str):
-                        # 🟢 Global Request ဇယားဆိုလျှင် အကြီးပြောင်းမည်၊ Inventory/Donor ဆိုလျှင် Title (ဥပမာ - Available) ပြောင်းမည်
                         if model == GlobalBloodRequest:
                             item_data['status'] = item_data['status'].upper()
                         else:
@@ -118,30 +112,34 @@ class GlobalSyncService:
                     except ValueError:
                         pass
                 
-                if global_updated and local_updated and isinstance(local_updated, datetime) and global_updated > local_updated:
-                    print(f"⚠️ Conflict: {item.table_name} - {item.record_id}")
-                    conflicts.append({
-                        "id": str(item.id),
-                        "record_id": str(item.record_id),
-                        "table_name": item.table_name,
-                        "global_data": {c.name: getattr(existing_record, c.name) for c in model.__table__.columns},
-                        "local_data": item.data,
-                        "message": "Global data is newer than local data"
-                    })
-                    GlobalSyncService._create_sync_log(db, item.id, "CONFLICT_DETECTED", conflict_details={
-                        "global_updated": global_updated.isoformat(),
-                        "local_updated": local_updated.isoformat() if isinstance(local_updated, datetime) else str(local_updated)
-                    })
-                    continue
+                gu_naive = global_updated.replace(tzinfo=None) if isinstance(global_updated, datetime) else global_updated
+                lu_naive = local_updated.replace(tzinfo=None) if isinstance(local_updated, datetime) else local_updated
+
+                incoming_status = str(item.data.get('status', '')).upper()
+                terminal_statuses = ['USED', 'PROCESSED', 'EXPIRED', 'DISCARDED', 'SUPPLIER_FULFILLED', 'DELIVERED', 'REJECTED']
+
+                if gu_naive and lu_naive and isinstance(lu_naive, datetime) and gu_naive > lu_naive:
+                    if incoming_status not in terminal_statuses:
+                        print(f"⚠️ Conflict: {item.table_name} - {item.record_id}")
+                        conflicts.append({
+                            "id": str(item.id),
+                            "record_id": str(item.record_id),
+                            "table_name": item.table_name,
+                            "global_data": {c.name: getattr(existing_record, c.name) for c in model.__table__.columns},
+                            "local_data": item.data,
+                            "message": "Global data is newer than local data"
+                        })
+                        GlobalSyncService._create_sync_log(db, item.id, "CONFLICT_DETECTED", conflict_details={
+                            "global_updated": gu_naive.isoformat(),
+                            "local_updated": lu_naive.isoformat()
+                        })
+                        continue
+                    else:
+                        print(f"⚠️ Override Conflict for Terminal Status: {incoming_status}")
 
                 for key, value in item.data.items():
                     if hasattr(existing_record, key) and key not in ["id", "hospital_id", "created_at", "_updated_at"]:
-                        
-                        # ==========================================
-                        # ✅ Table အလိုက် Status များကို ခွဲခြားပြင်ဆင်ခြင်း (UPDATE)
-                        # ==========================================
                         if key == 'status' and isinstance(value, str):
-                            # 🟢 Global Request ဇယားဆိုလျှင် အကြီးပြောင်းမည်၊ Inventory/Donor ဆိုလျှင် Title (ဥပမာ - Used) ပြောင်းမည်
                             if model == GlobalBloodRequest:
                                 value = value.upper()
                             else:
@@ -151,6 +149,14 @@ class GlobalSyncService:
                             
                         setattr(existing_record, key, value)
                 
+                # 🟢 [အရေးကြီး ပြင်ဆင်ချက်] Inventory Table အတွက် unit_id နှင့် blood_request_id ပါလာပါက ေနာက်ဆုံးအနေဖြင့် သေချာ ချိတ်ဆက်ပေးပါမည်
+                if model == Inventory:
+                    if 'unit_id' in item.data:
+                        setattr(existing_record, 'unit_id', item.data['unit_id'])
+                    if 'blood_request_id' in item.data:
+                        req_id_val = item.data['blood_request_id']
+                        setattr(existing_record, 'blood_request_id', UUID(req_id_val) if req_id_val else None)
+
                 if model != GlobalBloodRequest:
                     existing_record.hospital_id = hospital_id
                 

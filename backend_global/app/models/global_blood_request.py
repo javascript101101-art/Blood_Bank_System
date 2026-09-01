@@ -21,5 +21,10 @@ class GlobalBloodRequest(BaseModel):
     assigned_hospital_id = Column(UUID(as_uuid=True), ForeignKey("hospitals.id", ondelete="SET NULL"), nullable=True)
     request_note = Column(Text)
 
+    # ==========================================
+    # 🟢 [အသစ်] Global က ထုတ်ပေးလိုက်သော သွေးအိတ်များ၏ Unit ID များကို မှတ်သားရန်
+    # ==========================================
+    fulfilled_unit_ids = Column(String(500), nullable=True)
+
     requesting_hospital = relationship("Hospital", foreign_keys=[requesting_hospital_id])
     assigned_hospital = relationship("Hospital", foreign_keys=[assigned_hospital_id])

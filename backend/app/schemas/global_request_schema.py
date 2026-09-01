@@ -14,6 +14,11 @@ class GlobalBloodRequestBase(BaseModel):
     quantity_ml: int = Field(..., gt=0)
     urgency: Optional[str] = Field("Normal", pattern="^(Critical|Urgent|Normal)$")
     request_note: Optional[str] = None
+    
+    # ==========================================
+    # 🟢 [အသစ်] Sync လုပ်ရာတွင် Unit ID များပါသွားစေရန် ထည့်သွင်းထားပါသည်
+    # ==========================================
+    fulfilled_unit_ids: Optional[str] = None
 
 class GlobalBloodRequestCreate(GlobalBloodRequestBase):
     pass
@@ -27,9 +32,15 @@ class GlobalBloodRequestUpdate(BaseModel):
     
     quantity_ml: Optional[int] = Field(None, gt=0)
     urgency: Optional[str] = Field(None, pattern="^(Critical|Urgent|Normal)$")
-    status: Optional[str] = Field(None, pattern="^(Pending|Assigned|Approved|Fulfilled|Rejected|In-Transit|Delivered)$")
+    
+    # 🟢 Supplier_Fulfilled စသည်တို့နှင့် Validation ငြိနိုင်သဖြင့် pattern ကို ဖြုတ်ထားပါသည်
+    status: Optional[str] = Field(None) 
+    
     assigned_hospital_id: Optional[UUID] = None
     request_note: Optional[str] = None
+    
+    # 🟢 [အသစ်] Update လုပ်ရာတွင်လည်း Unit ID ကို လက်ခံနိုင်ရန်
+    fulfilled_unit_ids: Optional[str] = None
 
 class GlobalBloodRequestResponse(GlobalBloodRequestBase):
     id: UUID

@@ -35,7 +35,7 @@ class GlobalRequestService:
             "requesting_hospital_id": str(request.requesting_hospital_id),
             "blood_group": request.blood_group,
             "rh_factor": request.rh_factor,
-            "blood_component": request.blood_component,
+            "blood_component": request.blood_component, 
             "quantity_ml": request.quantity_ml,
             "urgency": request.urgency,
             "status": request.status,
@@ -132,8 +132,7 @@ class GlobalRequestService:
     @staticmethod
     def receive_delivery(db: Session, req_id: UUID, hospital_id: UUID) -> dict:
         """
-        🆕 Hospital (Requesting Hospital) → Blood ရောက်ပြီ Confirm လုပ်ခြင်း
-        (ရှိပြီးသားထဲ ပေါင်းမထည့်ဘဲ Global ကလာသော သွေးအိတ်အသစ်အဖြစ် Inventory တွင် မှတ်တမ်းတင်မည်)
+        🆕 Hospital A (Requesting Hospital) → Blood ရောက်ပြီ Confirm လုပ်ခြင်း
         """
         request = db.query(GlobalBloodRequest).filter(
             GlobalBloodRequest.id == req_id,
@@ -150,44 +149,65 @@ class GlobalRequestService:
                 detail=f"Can only receive requests with 'In-Transit' status. Current: {request.status}"
             )
 
-        # 🟢 ရှိပြီးသားကို သွားမရှာတော့ဘဲ၊ သွေးအိတ်အသစ် (Discrete Bag) အမြဲ ဖန်တီးမည်
-        new_inventory = Inventory(
-            hospital_id=hospital_id,
-            blood_group=request.blood_group,
-            rh_factor=request.rh_factor,
-            blood_component=request.blood_component,
-            quantity_ml=request.quantity_ml,
-            expiry_date=datetime.now().date() + timedelta(days=35), # ပုံမှန် ၃၅ ရက် သက်တမ်း
-            status="Available"
-        )
-        db.add(new_inventory)
-        db.flush() 
-        inv_id = str(new_inventory.id)
+        # ==========================================
+        # 🟢 Global မှ တွဲပို့လိုက်သော Unit ID များကို ဖမ်းယူခြင်း
+        # ==========================================
+        unit_ids_str = getattr(request, 'fulfilled_unit_ids', None)
+        unit_ids = [uid.strip() for uid in unit_ids_str.split(',')] if unit_ids_str else [None]
+        
+        # Unit ID အရေအတွက်အတိုင်း သွေးပမာဏကို ခွဲဝေမည် (ဥပမာ 1500ml ကို 3 အိတ်ဆိုလျှင် 500ml စီ)
+        quantity_per_bag = request.quantity_ml // len(unit_ids) if len(unit_ids) > 0 else request.quantity_ml
+        
+        added_inv_ids = []
 
-        # Inventory အသစ်ဝင်ကြောင်း Sync Queue ထဲ ထည့်ခြင်း
-        inv_sync = SyncQueue(
-            hospital_id=hospital_id,
-            table_name="inventory",
-            record_id=new_inventory.id,
-            operation="INSERT",
-            data={
+        # 🟢 သွေးအိတ်အရေအတွက် အတိုင်း Loop ပတ်၍ Local Inventory ထဲ သီးသန့်စီ သိမ်းပါမည်
+        for uid in unit_ids:
+            new_inventory = Inventory(
+                hospital_id=hospital_id,
+                unit_id=uid if uid else None, # 🟢 Unit ID အတိအကျ ထည့်သွင်းခြင်း
+                blood_group=request.blood_group,
+                rh_factor=request.rh_factor,
+                blood_component=request.blood_component,
+                quantity_ml=quantity_per_bag, 
+                expiry_date=datetime.now().date() + timedelta(days=35),
+                status="Available"
+            )
+            
+            if hasattr(new_inventory, 'supplier'):
+                new_inventory.supplier = "Global Hub"
+
+            db.add(new_inventory)
+            db.flush() 
+            added_inv_ids.append(str(new_inventory.id))
+
+            # 🟢 SyncQueue ထဲသို့ Unit ID နှင့်တကွ ပြန်ထည့်ပေးခြင်း
+            inv_sync_data = {
                 "blood_group": new_inventory.blood_group,
                 "rh_factor": new_inventory.rh_factor,
                 "blood_component": new_inventory.blood_component,
                 "quantity_ml": new_inventory.quantity_ml,
                 "expiry_date": str(new_inventory.expiry_date),
                 "status": new_inventory.status
-            },
-            status="PENDING"
-        )
-        db.add(inv_sync)
+            }
+            if uid:
+                inv_sync_data["unit_id"] = uid
+            if hasattr(new_inventory, 'supplier'):
+                inv_sync_data["supplier"] = "Global Hub"
 
-        # Request ကို Delivered ဖြစ်ကြောင်း Update လုပ်ခြင်း
+            inv_sync = SyncQueue(
+                hospital_id=hospital_id,
+                table_name="inventory",
+                record_id=new_inventory.id,
+                operation="INSERT",
+                data=inv_sync_data,
+                status="PENDING"
+            )
+            db.add(inv_sync)
+
         request.status = "Delivered"
         db.commit()
         db.refresh(request)
 
-        # Request အခြေအနေပြောင်းကြောင်း Sync Queue ထဲ ထည့်ခြင်း
         req_sync = SyncQueue(
             hospital_id=hospital_id,
             table_name="global_blood_requests",
@@ -211,19 +231,19 @@ class GlobalRequestService:
         db.commit()
 
         return {
-            "message": "Blood received! New inventory bag added successfully.",
+            "message": f"Blood received! {len(unit_ids)} new inventory bag(s) added successfully.",
             "request_id": str(request.id),
             "blood_group": request.blood_group,
             "rh_factor": request.rh_factor,
             "blood_component": request.blood_component,
-            "quantity_added": request.quantity_ml,
-            "inventory_id": inv_id
+            "total_quantity_added": request.quantity_ml,
+            "inventory_ids": added_inv_ids
         }
 
     @staticmethod
     def fulfill_request_to_global(db: Session, req_id: UUID, hospital_id: UUID) -> dict:
         """
-        🆕 Assigned Hospital မှ သွေးလှူဒါန်းရန် (Fulfill)
+        🆕 Hospital A (Assigned Hospital) မှ သွေးလှူဒါန်းရန် (Fulfill)
         Local Inventory မှ သွေးနှုတ်မည်။
         """
         request = db.query(GlobalBloodRequest).filter(
@@ -240,12 +260,11 @@ class GlobalRequestService:
                 detail=f"Can only fulfill requests with 'Assigned' status. Current: {request.status}"
             )
 
-        # 🟢 Local Inventory တွင် ရှာရာ၌ Component ပါ တူညီမှသာ နှုတ်မည်
         available_inventory = db.query(Inventory).filter(
             Inventory.hospital_id == hospital_id,
             Inventory.blood_group == request.blood_group,
             Inventory.rh_factor == request.rh_factor,
-            Inventory.blood_component == request.blood_component,
+            Inventory.blood_component == request.blood_component, 
             Inventory.status == "Available",
             Inventory.quantity_ml > 0
         ).order_by(Inventory.expiry_date.asc()).all()
@@ -258,6 +277,10 @@ class GlobalRequestService:
             )
 
         remaining_to_deduct = request.quantity_ml
+        
+        # 🟢 [အရေးကြီး ပြင်ဆင်ချက်] သုံးလိုက်သော သွေးအိတ်များ၏ Unit ID များကို မှတ်သားရန် List ဆောက်ပါမည်
+        used_unit_ids = []
+
         for inv in available_inventory:
             if remaining_to_deduct <= 0:
                 break
@@ -265,6 +288,10 @@ class GlobalRequestService:
             deduct_amount = min(inv.quantity_ml, remaining_to_deduct)
             inv.quantity_ml -= deduct_amount
             remaining_to_deduct -= deduct_amount
+            
+            # 🟢 Unit ID ပါရှိပါက မှတ်သားထားပါမည်
+            if inv.unit_id and inv.unit_id not in used_unit_ids:
+                used_unit_ids.append(inv.unit_id)
 
             if inv.quantity_ml == 0:
                 inv.status = "Used"
@@ -275,6 +302,7 @@ class GlobalRequestService:
                 record_id=inv.id,
                 operation="UPDATE",
                 data={
+                    "unit_id": inv.unit_id, # 🟢 Sync Data တွင် Unit ID ပါ တွဲပို့ပေးပါမည်
                     "quantity_ml": inv.quantity_ml,
                     "status": inv.status
                 },
@@ -283,16 +311,26 @@ class GlobalRequestService:
             db.add(inv_sync)
 
         request.status = "Supplier_Fulfilled"
+        
+        # 🟢 [အရေးကြီး ပြင်ဆင်ချက်] Local Database တွင်လည်း fulfilled_unit_ids ကော်လံရှိပါက သိမ်းဆည်းပေးပါမည်
+        fulfilled_unit_ids_str = ",".join(used_unit_ids) if used_unit_ids else None
+        if hasattr(request, 'fulfilled_unit_ids'):
+            request.fulfilled_unit_ids = fulfilled_unit_ids_str
+
+        # 🟢 Global သို့ Request Data Sync ပို့ရာတွင် Unit ID များပါ တွဲပို့ပေးပါမည်
+        sync_req_data = {
+            "id": str(request.id),
+            "status": request.status
+        }
+        if fulfilled_unit_ids_str:
+            sync_req_data["fulfilled_unit_ids"] = fulfilled_unit_ids_str
 
         req_sync = SyncQueue(
             hospital_id=hospital_id,
             table_name="global_blood_requests",
             record_id=request.id,
             operation="UPDATE",
-            data={
-                "id": str(request.id),
-                "status": request.status
-            },
+            data=sync_req_data, # 🟢 Unit ID ပါဝင်သော data ကို ပို့ပါမည်
             status="PENDING"
         )
         db.add(req_sync)
@@ -304,5 +342,6 @@ class GlobalRequestService:
             "message": "Blood fulfilled successfully! Deducted from local inventory.",
             "request_id": str(request.id),
             "deducted_ml": request.quantity_ml,
-            "status": request.status
+            "status": request.status,
+            "unit_ids": used_unit_ids
         }
