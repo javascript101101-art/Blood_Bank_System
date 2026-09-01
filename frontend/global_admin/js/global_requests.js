@@ -1,16 +1,43 @@
 // ============================================
-// Global Admin - Global Blood Requests
+// Global Admin - Global Blood Requests (UPDATED: Hospital Names)
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
+let hospitals = []; // 🟢 ဆေးရုံစာရင်းများကို သိမ်းထားမည့် Array အသစ်
+
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🟢 DOM loaded');
     if (!isAuthenticated()) {
         console.log('🔴 Not authenticated, redirecting...');
         window.location.href = 'index.html';
         return;
     }
-    console.log('🟢 Authenticated, loading requests...');
+    console.log('🟢 Authenticated, loading hospitals and requests...');
+    
+    // 🟢 Requests များကို မဆွဲယူမီ ဆေးရုံစာရင်းကို အရင်ဆွဲယူပါမည်
+    await loadHospitals(); 
     loadRequests();
 });
+
+// ============================================
+// 🏥 Helper: ဆေးရုံစာရင်း ဆွဲယူခြင်းနှင့် နာမည်ပြောင်းခြင်း
+// ============================================
+async function loadHospitals() {
+    try {
+        const result = await apiRequest('/admin/stats', { method: 'GET' });
+        if (result && result.status === 200 && result.data) {
+            hospitals = result.data.hospitals || [];
+            console.log('✅ Hospitals loaded:', hospitals.length);
+        }
+    } catch (error) {
+        console.error('❌ Error loading hospitals:', error);
+    }
+}
+
+function getHospitalName(hospitalId) {
+    if (!hospitalId) return 'Not assigned';
+    const hospital = hospitals.find(h => h.hospital_id === hospitalId);
+    // နာမည်တွေ့လျှင် နာမည်ပြမည်၊ မတွေ့လျှင် ID အစပိုင်းကိုသာ ပြမည်
+    return hospital ? hospital.name : hospitalId.substring(0, 8) + '...';
+}
 
 async function loadRequests() {
     console.log('🟢 loadRequests() started');
@@ -21,7 +48,6 @@ async function loadRequests() {
         return;
     }
     
-    // 🟢 ကော်လံ ၉ ခုဖြစ်သွားသဖြင့် colspan="9" သို့ ပြောင်းထားပါသည်
     tbody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
 
     try {
@@ -64,7 +90,6 @@ async function loadRequests() {
                         <button class="btn btn-info btn-sm" onclick="fulfillRequest('${req.id}')">📦 Mark Fulfilled</button>
                         <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">❌ Reject</button>
                     `;
-                // 🟢 SUPPLIER_FULFILLED ပါ ထည့်သွင်းစစ်ဆေးထားသည်
                 } else if (req.status === 'FULFILLED' || req.status === 'Fulfilled' || req.status === 'SUPPLIER_FULFILLED' || req.status === 'Supplier_Fulfilled') {
                     actions = `
                         <button class="btn btn-warning btn-sm" onclick="deliverRequest('${req.id}')">🚚 Deliver Blood</button>
@@ -80,17 +105,17 @@ async function loadRequests() {
                 // 🆕 Component အမည်ကို ယူပြီး လှပအောင် ပြင်ဆင်ခြင်း
                 const componentDisplay = req.blood_component ? req.blood_component.replace('_', ' ') : 'Whole Blood';
 
+                // 🟢 ID များအစား getHospitalName ကို အသုံးပြု၍ နာမည်များ ဖော်ပြခြင်း
                 html += `
                     <tr>
-                        <td>${req.requesting_hospital_id || 'Unknown'}</td>
+                        <td><strong>${getHospitalName(req.requesting_hospital_id)}</strong></td>
                         <td><span class="badge">${req.blood_group}</span></td>
                         <td>${req.rh_factor}</td>
-                        <!-- 🆕 Component ကို ပြသရန် အကွက်အသစ် ထည့်သွင်းထားပါသည် -->
                         <td><span class="badge" style="background-color: #e2e8f0; color: #475569;">${componentDisplay}</span></td>
                         <td>${req.quantity_ml} ml</td>
                         <td><span class="urgency-badge urgency-${req.urgency.toLowerCase()}">${req.urgency}</span></td>
                         <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
-                        <td>${req.assigned_hospital_id || 'Not assigned'}</td>
+                        <td>${getHospitalName(req.assigned_hospital_id)}</td>
                         <td>${actions}</td>
                     </tr>
                 `;
@@ -118,7 +143,7 @@ async function approveFromGlobal(id) {
         const result = await apiRequest(`/global-requests/${id}`, {
             method: 'PUT',
             body: JSON.stringify({ 
-                status: 'SUPPLIER_FULFILLED', // 🟢 Backend နှင့် ကိုက်ညီအောင် 'SUPPLIER_FULFILLED' သို့ ပြောင်းထားပါသည်
+                status: 'SUPPLIER_FULFILLED', 
                 assigned_hospital_id: null
             })
         });

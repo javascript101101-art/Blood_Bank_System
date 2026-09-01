@@ -13,6 +13,9 @@ class Inventory(BaseModel):
     
     # 🟢 ဤနေရာတွင် Traceability အတွက် blood_request_id ထပ်ထည့်ရပါမည်
     blood_request_id = Column(UUID(as_uuid=True), nullable=True)
+
+    # 🟢 သွေးအိတ်နံပါတ် (Unit ID) ကို Local ကအတိုင်း လက်ခံနိုင်ရန် ထည့်သွင်းခြင်း
+    unit_id = Column(String(50), nullable=True)
     
     blood_group = Column(String(3), nullable=False)
     rh_factor = Column(String(10), nullable=False)

@@ -6,10 +6,11 @@ from app.middleware.auth_middleware import get_current_active_user, role_require
 from app.models.user import User
 from app.models.donor import Donor          
 from app.models.inventory import Inventory  
-from app.models.blood_request import BloodRequest # 🟢 Import BloodRequest (အသစ်)
+from app.models.blood_request import BloodRequest 
+from app.models.global_inventory import GlobalInventory # 🟢 Global Inventory ကို Import လုပ်ပါသည်
 from app.services.admin_service import AdminService
 from app.schemas.admin_schema import GlobalStats, SyncLogEntry
-from app.schemas.request_schema import BloodRequestResponse # 🟢 Import Request Schema (အသစ်)
+from app.schemas.request_schema import BloodRequestResponse 
 from uuid import UUID 
 from app.schemas.inventory_schema import InventoryResponse 
 
@@ -51,16 +52,54 @@ def get_all_donors(
     return donors
 
 # ============================================
-# 4. Get All Inventory (All Hospitals)
+# 🟢 4. Get All Inventory (Local + Global) ပြင်ဆင်ချက်
 # ============================================
 @router.get("/inventory")
 def get_all_inventory(
     db: Session = Depends(get_db),
     current_user: User = Depends(role_required("Global_Admin"))
 ):
-    """ဆေးရုံအားလုံးရဲ့ Inventory စာရင်းကို ပြန်ပေးပါ"""
-    inventory = db.query(Inventory).all()
-    return inventory
+    """ဆေးရုံအားလုံးရဲ့ Inventory နှင့် Global Inventory စာရင်းကို ပေါင်းပြီး ပြန်ပေးပါ"""
+    
+    # ၁။ Local Hospitals များမှ Inventory များ
+    local_inventory = db.query(Inventory).all()
+    
+    # ၂။ Global Central Hub ၏ Inventory များ
+    global_inventory = db.query(GlobalInventory).order_by(GlobalInventory.created_at.desc()).all()
+    
+    combined_inventory = []
+    
+    # Local Data များ ပေါင်းထည့်ခြင်း
+    for item in local_inventory:
+        combined_inventory.append({
+            "id": str(item.id),
+            "hospital_id": str(item.hospital_id) if item.hospital_id else None,
+            "unit_id": item.unit_id,
+            "blood_component": getattr(item, "blood_component", "Whole_Blood"),
+            "blood_group": item.blood_group,
+            "rh_factor": item.rh_factor,
+            "quantity_ml": item.quantity_ml,
+            "expiry_date": item.expiry_date,
+            "status": item.status,
+            "supplier": "Local Hospital" # 🟢 Local မှလာကြောင်း သတ်မှတ်သည်
+        })
+        
+    # Global Data များ ပေါင်းထည့်ခြင်း
+    for item in global_inventory:
+        combined_inventory.append({
+            "id": str(item.id),
+            "hospital_id": None, # 🟢 Global Hub ဖြစ်ကြောင်း သိစေရန် None ထားမည်
+            "unit_id": item.unit_id,
+            "blood_component": getattr(item, "blood_component", "Whole_Blood"),
+            "blood_group": item.blood_group,
+            "rh_factor": item.rh_factor,
+            "quantity_ml": item.quantity_ml,
+            "expiry_date": getattr(item, "expiry_date", None),
+            "status": getattr(item, "status", "Available"),
+            "supplier": getattr(item, "supplier", "Global Hub") # 🟢 Supplier အမည် (သို့) Global Hub
+        })
+        
+    return combined_inventory
 
 # ============================================
 # 5. Get Low Stock Warnings (Global)
@@ -101,7 +140,7 @@ def get_global_donor_history(
     return AdminService.get_donor_history(db, donor_id)
 
 # ============================================
-# 🟢 8. Get All Blood Requests (Global Admin အတွက် အသစ်)
+# 8. Get All Blood Requests (Global Admin အတွက်)
 # ============================================
 @router.get("/requests", response_model=List[BloodRequestResponse])
 def get_all_blood_requests(

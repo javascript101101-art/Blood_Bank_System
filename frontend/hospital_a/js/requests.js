@@ -1,5 +1,5 @@
 // ============================================
-// Blood Request Management (FIXED FOR EXTERNAL CLINIC & COMPONENTS)
+// Blood Request Management (FIXED FOR EXTERNAL CLINIC, COMPONENTS & TRACEABILITY)
 // ============================================
 let editingRequestId = null;
 let currentUserRole = null;
@@ -130,16 +130,32 @@ async function loadRequests() {
                 // 🟢 သွေးအစိတ်အပိုင်း (Blood Component) ကို ရှင်းလင်းစွာ ပြသရန်
                 const componentDisplay = (req.blood_component || 'Red_Cells').replace('_', ' ').toUpperCase();
 
+                // 🟢 ထုတ်ပေးလိုက်သော သွေးအိတ်များ (Unit IDs) ကို Badge အနေဖြင့် ပြသရန် Logic
+                let unitIdsHtml = '<span style="color: #94a3b8;">-</span>';
+                
+                // 🟢 Fulfilled Unit IDs များကို String မှ ခွဲထုတ်၍ ပြသခြင်း
+                if (req.fulfilled_unit_ids) {
+                    const unitIdsArray = req.fulfilled_unit_ids.split(',');
+                    unitIdsHtml = unitIdsArray.map(id => {
+                        return `<span class="badge" style="background:#e0f2fe; color:#0369a1; border: 1px solid #bae6fd; font-size:11px; margin-right: 4px; display: inline-block; margin-bottom: 2px;">${id.trim()}</span>`;
+                    }).join('');
+                } else if (req.fulfilled_inventories && req.fulfilled_inventories.length > 0) {
+                    unitIdsHtml = req.fulfilled_inventories.map(inv => {
+                        return `<span class="badge" style="background:#e0f2fe; color:#0369a1; border: 1px solid #bae6fd; font-size:11px; margin-right: 4px; display: inline-block; margin-bottom: 2px;">${inv.unit_id || 'N/A'}</span>`;
+                    }).join('');
+                }
+
                 return `
                     <tr>
                         <td><strong>${req.clinic_name}</strong><br><small>${req.contact_phone}</small></td>
                         <td><span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${componentDisplay}</span></td>
                         <td><span class="badge">${req.blood_group}</span></td>
                         <td>${req.required_date || '-'}</td>
-                        <td>${req.quantity_units}</td>
+                        <td>${req.quantity_units} အိတ် <br><small>(${req.volume_per_unit_ml || 500} ml)</small></td>
                         <td><span class="urgency-badge urgency-${req.urgency ? req.urgency.split(' ')[0].toLowerCase() : 'normal'}">${req.urgency}</span></td>
                         <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
-                        <td>${formatDateTime(req.requested_at || req.created_at)}</td>
+                        <!-- 🟢 ဒီနေရာမှာ Unit IDs တွေ ဝင်လာပါပြီ -->
+                        <td>${unitIdsHtml}</td>
                         <td>
                             ${actionButtons}
                             ${editDeleteButtons}
@@ -218,6 +234,11 @@ function openRequestModal(requestData = null) {
 
         document.getElementById('reqBloodGroup').value = requestData.blood_group;
         document.getElementById('reqQuantity').value = requestData.quantity_units;
+        
+        // 🟢 [အသစ်] Pamaဏ ထည့်သွင်းခြင်း
+        const volumeInput = document.getElementById('reqVolume');
+        if (volumeInput) volumeInput.value = requestData.volume_per_unit_ml || 500;
+        
         document.getElementById('reqUrgency').value = requestData.urgency;
         document.getElementById('reqRequiredDate').value = requestData.required_date || '';
         document.getElementById('reqPatientCondition').value = requestData.patient_condition || '';
@@ -228,6 +249,9 @@ function openRequestModal(requestData = null) {
         title.textContent = 'New Blood Request';
         document.getElementById('reqStatus').value = 'Pending';
         document.getElementById('reqUrgency').value = 'Normal Request';
+        
+        const volumeInput = document.getElementById('reqVolume');
+        if (volumeInput) volumeInput.value = 500; // Default
         
         const isClinic = currentUserRole === 'Clinic';
         if (isClinic) {
@@ -282,11 +306,12 @@ async function handleRequestSubmit(e) {
     const errorEl = document.getElementById('requestFormError');
     errorEl.style.display = 'none';
 
-    // 🟢 🆕 Payload ထဲတွင် blood_component ကို ထည့်သွင်းပေးခြင်း
+    // 🟢 🆕 Payload ထဲတွင် volume_per_unit_ml ကိုပါ ထည့်သွင်းပေးခြင်း
     let requestData = {
         blood_component: document.getElementById('reqBloodComponent').value,
         blood_group: document.getElementById('reqBloodGroup').value,
         quantity_units: parseInt(document.getElementById('reqQuantity').value),
+        volume_per_unit_ml: parseInt(document.getElementById('reqVolume').value) || 500, // 🟢 ဤနေရာတွင် ထည့်ပါသည်
         urgency: document.getElementById('reqUrgency').value,
         required_date: document.getElementById('reqRequiredDate').value,
         patient_condition: document.getElementById('reqPatientCondition').value

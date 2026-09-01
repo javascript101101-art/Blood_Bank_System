@@ -14,6 +14,11 @@ class GlobalBloodRequestBase(BaseModel):
     quantity_ml: int = Field(..., gt=0)
     urgency: Optional[str] = Field("Normal", pattern="^(Critical|Urgent|Normal)$")
     request_note: Optional[str] = None
+    
+    # ==========================================
+    # 🟢 [အရေးကြီးဆုံး] ဒီမှာ Unit ID တွေသယ်သွားဖို့ Field ကို မဖြစ်မနေ ထည့်ရပါမည်
+    # ==========================================
+    fulfilled_unit_ids: Optional[str] = None
 
 class GlobalBloodRequestCreate(GlobalBloodRequestBase):
     pass
@@ -33,6 +38,9 @@ class GlobalBloodRequestUpdate(BaseModel):
     
     assigned_hospital_id: Optional[UUID] = None
     request_note: Optional[str] = None
+    
+    # 🟢 [အရေးကြီးဆုံး] Update လုပ်ရာတွင်လည်း Unit ID များကို လက်ခံနိုင်ရန် ထည့်ရပါမည်
+    fulfilled_unit_ids: Optional[str] = None
 
 class GlobalBloodRequestResponse(GlobalBloodRequestBase):
     id: UUID

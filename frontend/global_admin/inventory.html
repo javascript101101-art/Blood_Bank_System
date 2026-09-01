@@ -23,9 +23,8 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html"><i class="fas fa-chart-pie"></i> ပင်မစာမျက်နှာ</a>
             <a href="donors.html"><i class="fas fa-users"></i> သွေးလှူရှင်အားလုံး</a>
-            <a href="inventory.html"><i class="fas fa-boxes"></i> သွေးလက်ကျန်အားလုံး</a>
-            <!-- 🟢 requests.html ကို အသစ်ထည့်သွင်းထားပါသည် -->
-            <a href="requests.html" ><i class="fas fa-clipboard-list"></i> သွေးတောင်းခံလွှာအားလုံး</a>
+            <a href="inventory.html" class="active"><i class="fas fa-boxes"></i> သွေးလက်ကျန်အားလုံး</a>
+            
             <a href="global_requests.html"><i class="fas fa-globe-asia"></i> ကမ္ဘာ့သွေးတောင်းခံမှုများ</a>
             <a href="sync_logs.html"><i class="fas fa-history"></i> ချိတ်ဆက်မှုမှတ်တမ်းများ</a>
             <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> ထွက်ရန်</a>
@@ -57,12 +56,11 @@
                         <tr>
                             <th>သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <th>အမျိုးအစား (Component)</th> <!-- 🟢 ဤကော်လံ ထပ်ဖြည့်ထားပါသည် -->
+                            <th>အမျိုးအစား (Component)</th> 
                             <th>စုစုပေါင်း ပမာဏ (ml)</th>
                         </tr>
                     </thead>
                     <tbody id="globalInventoryBody">
-                        <!-- 🟢 colspan ကို 3 မှ 4 သို့ ပြောင်းထားပါသည် -->
                         <tr><td colspan="4" class="text-muted" style="color: var(--text-muted);">ကမ္ဘာ့လက်ကျန် ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
@@ -108,9 +106,11 @@
                     <thead>
                         <tr>
                             <th>ဆေးရုံ</th>
+                            <!-- 🟢 ဒီမှာ ပေးပို့သူ (Supplier) အကွက်ကို ထည့်ပေးလိုက်ပါပြီ -->
+                            <th>ပေးပို့သူ (Supplier)</th>
+                            <th>သွေးအိတ်နံပါတ် (Unit ID)</th>
                             <th>သွေးအုပ်စု</th>
                             <th>Rh Factor</th>
-                            <!-- 🟢 အမျိုးအစား (Component) ကော်လံ ထပ်တိုးခြင်း -->
                             <th>အမျိုးအစား (Component)</th>
                             <th>ပမာဏ (ml)</th>
                             <th>သက်တမ်းကုန်ဆုံးရက်</th>
@@ -118,8 +118,8 @@
                         </tr>
                     </thead>
                     <tbody id="inventoryBody">
-                        <!-- 🟢 colspan ကို 6 မှ 7 သို့ ပြောင်းထားပါသည် -->
-                        <tr><td colspan="7" class="text-muted" style="color: var(--text-muted);">ဆေးရုံများ၏ လက်ကျန်ဒေတာ ရယူနေသည်...</td></tr>
+                        <!-- 🟢 ကော်လံ ၉ ခုဖြစ်သွား၍ colspan="9" သို့ ပြောင်းထားပါသည် -->
+                        <tr><td colspan="9" class="text-muted" style="color: var(--text-muted);">ဆေးရုံများ၏ လက်ကျန်ဒေတာ ရယူနေသည်...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -134,24 +134,31 @@
                 <button class="close-btn" onclick="closeAddBloodModal()">&times;</button>
             </div>
             <form id="addBloodForm">
+                
                 <div class="form-group">
-                    <label>သွေးအုပ်စု :</label>
-                    <select id="newBloodGroup" required>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="AB">AB</option>
-                        <option value="O">O</option>
-                    </select>
+                    <label>ပေးပို့သည့် အဖွဲ့အစည်း / အလှူရှင် (Supplier) :</label>
+                    <input type="text" id="newSupplier" required placeholder="ဥပမာ - WHO, Red Cross, Mass Blood Drive">
                 </div>
-                <div class="form-group">
-                    <label>Rh Factor :</label>
-                    <select id="newRhFactor" required>
-                        <option value="Positive">Positive (+)</option>
-                        <option value="Negative">Negative (-)</option>
-                    </select>
+
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>သွေးအုပ်စု :</label>
+                        <select id="newBloodGroup" required>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Rh Factor :</label>
+                        <select id="newRhFactor" required>
+                            <option value="Positive">Positive (+)</option>
+                            <option value="Negative">Negative (-)</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <!-- 🟢 အမျိုးအစား ရွေးချယ်ရန် ထပ်တိုးခြင်း -->
                 <div class="form-group">
                     <label>အမျိုးအစား (Component) :</label>
                     <select id="newBloodComponent" required>
@@ -162,10 +169,22 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>ပမာဏ (ml) :</label>
-                    <input type="number" id="newQuantity" min="1" required placeholder="ဥပမာ - 500">
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>သွေးအိတ် အရေအတွက် :</label>
+                        <input type="number" id="newNumberOfUnits" min="1" value="1" required placeholder="ဥပမာ - 5">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>တစ်အိတ်ပါဝင်မည့် ပမာဏ (ml) :</label>
+                        <input type="number" id="newQuantity" min="1" required placeholder="ဥပမာ - 500">
+                    </div>
                 </div>
+
+                <div class="form-group">
+                    <label>သက်တမ်းကုန်ဆုံးရက် (Expiry Date) :</label>
+                    <input type="date" id="newExpiryDate" required>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeAddBloodModal()">ပယ်ဖျက်ရန်</button>
                     <button type="submit" class="btn btn-success">သွေးထည့်သိမ်းရန်</button>
@@ -179,10 +198,13 @@
     <script src="js/auth.js"></script>
     <script src="js/inventory.js"></script>
 
-    <!-- Original JS Modal Control (Function names and logic kept intact) -->
+    <!-- Original JS Modal Control -->
     <script>
         function openAddBloodModal() {
             document.getElementById('addBloodModal').style.display = 'flex';
+            const today = new Date();
+            today.setDate(today.getDate() + 35);
+            document.getElementById('newExpiryDate').value = today.toISOString().split('T')[0];
         }
         function closeAddBloodModal() {
             document.getElementById('addBloodModal').style.display = 'none';

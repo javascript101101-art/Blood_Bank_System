@@ -13,6 +13,9 @@ class InventoryBase(BaseModel):
     
     # 🟢 အသစ် - ဘယ် Request အတွက် သုံးလိုက်လဲဆိုတာ ခြေရာခံရန် (Vein-to-Vein Traceability)
     blood_request_id: Optional[UUID] = None
+
+    # 🟢 သွေးအိတ်နံပါတ် (Unit ID) - Traceability အတွက် အဓိက အရေးကြီးဆုံးအပိုင်း
+    unit_id: Optional[str] = None
     
     # 🆕 သွေးအစိတ်အပိုင်း အမျိုးအစား (ဥပမာ - Red_Cells, Plasma, Platelets)
     blood_component: str = Field(..., pattern="^(Red_Cells|Plasma|Platelets|Whole_Blood|Processed)$")

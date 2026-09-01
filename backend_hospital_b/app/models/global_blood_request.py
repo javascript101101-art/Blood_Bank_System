@@ -22,6 +22,12 @@ class GlobalBloodRequest(BaseModel):
     assigned_hospital_id = Column(UUID(as_uuid=True), ForeignKey("hospitals.id", ondelete="SET NULL"), nullable=True)
     request_note = Column(Text)
     
+    # ==========================================
+    # 🟢 [အသစ်] Local ဘက်က Model မှာလည်း ဒီကော်လံ ရှိနေရပါမည်
+    # (Global ကနေ Sync လာတဲ့ Unit ID များကို သိမ်းရန်)
+    # ==========================================
+    fulfilled_unit_ids = Column(String(500), nullable=True)
+    
     # Relationships
     requesting_hospital = relationship("Hospital", foreign_keys=[requesting_hospital_id])
     assigned_hospital = relationship("Hospital", foreign_keys=[assigned_hospital_id])
